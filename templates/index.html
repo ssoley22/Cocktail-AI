@@ -2,66 +2,77 @@
 <html lang="ca">
 <head>
     <meta charset="UTF-8">
-    <title> Cocktail AI</title>
+    <title>Cocktail AI 🍸</title>
     <style>
-        body{
-            background-color: #03034b;
-            color: #ffffff;
+        /* Fons de pantalla modern */
+        body {
+            background-color: #0b0d17; /* Blau nit molt fosc */
+            color: white;
             font-family: 'Segoe UI', sans-serif;
             text-align: center;
-            padding: 40px 20px;
+            padding: 50px 20px;
         }
 
-        h1{
-            color: #00f2ff
+        h1 {
+            font-size: 3rem;
+            color: #00f2ff; /* Blau neó */
             text-shadow: 0 0 10px #00f2ff;
-            font-size: 2.5rem;
+            margin-bottom: 40px;
         }
 
-        p{
-            color: #aaaaaa;
-            margin-bottom: 30px;
+        /* Contenidor dels botons per posar-los un sota l'altre */
+        .menu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
         }
 
-        .btn{
-            background: #8a0c0c;
-            color: white;
+        /* El nou estil dels teus botons */
+        .btn-menu {
+            background-color: #1a1f35;
+            color: #00f2ff;
             border: 2px solid #00f2ff;
-            padding: 15px 30px;
-            font-size: 1.2rem;
-            border-radius: 12px;
+            padding: 20px 40px;
+            font-size: 1.5rem;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 400px;
             cursor: pointer;
-            width: 100%;
-            max-width: 300px;
-            margin: 10px auto;
-            display: block;
-            transition: 0.3s;       
-        }
-        .btn:hover{
-            background: #00f2ff;
-            color: black;
-            border-color: 0 0 20px #00f2ff;
+            transition: all 0.3s ease; /* Efecte suau */
+            font-weight: bold;
         }
 
-        .btn-ia{
-            border-color: #bc13fe;
+        /* Quan el ratolí passa per sobre */
+        .btn-menu:hover {
+            background-color: #00f2ff;
+            color: #0b0d17;
+            box-shadow: 0 0 30px #00f2ff;
+            transform: scale(1.05); /* Es fa una mica més gran */
+        }
+
+        /* Un color diferent per al botó de la IA */
+        .ia {
             color: #bc13fe;
+            border-color: #bc13fe;
         }
 
-        .btn-ia:hover{
-            background: #bc13fe;
+        .ia:hover {
+            background-color: #bc13fe;
             color: white;
-            border-color: 0 0 20px #bc13fe;
-        }   
+            box-shadow: 0 0 30px #bc13fe;
+        }
     </style>
 </head>
 <body>
-    <h1>Benvinguts a Cocktail-AI </h1>
-    <p> Tria el teu còctel preferit:</p>
 
-    <button> Gin Tònic</button>
-    <button class=""btn btn-ia">Demanar a la Ia </button>
+    <h1>Cocktail AI 🍸</h1>
+
+    <div class="menu">
+        <button class="btn-menu">📖 Catàleg de Còctels</button>
+        <button class="btn-menu">🎛️ Gestió d'Inventari</button>
+        <button class="btn-menu ia">✨ Demanar a la IA</button>
+    </div>
 
 </body>
 </html>
-    

@@ -1,6 +1,5 @@
-==================================================
-        PROJECTE: SMART COCKTAIL AI 🍹
-==================================================
+
+# PROJECTE: SMART COCKTAIL AI 🍹
 
 ## Requisits previs
 - Python 3.10 o superior

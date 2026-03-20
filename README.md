@@ -22,3 +22,17 @@
 
 4. Instal·lar les llibreries:
    pip install -r requirements.txt
+
+## Estructura del projecte
+```
+COCKTAIL-AI/
+├── backend/
+│   ├── app.py          ← Servidor Flask i endpoints
+│   ├── database.py     ← Funcions de consulta a la base de dades
+│   └── cocktail.db     ← Base de dades SQLite
+├── frontend/
+│   └── index.html      ← Interfície web
+├── .gitignore
+├── README.md
+└── requirements.txt
+```

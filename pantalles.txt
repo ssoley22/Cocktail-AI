@@ -1,0 +1,70 @@
+[1 Inici] ──────────────────────────────→ [5 Admin]
+    ├── Manual    → [2a Catàleg]        ↘
+    ├── Aleatori  → [2b Aleatori]        → [3 Confirmació + +18 + Captcha] → [4 Espera]
+    ├── Emocions  → [2c 4 cares]        ↗
+    └── IA (xat)  → [2d Xat lliure]    ↗
+
+
+Pantalla 1 — Inici
+
+    Logo / nom del projecte
+    4 botons grans: Manual, Aleatori, Emocions, IA (xat)
+    Botó d'admin petit i discret a un racó (icona d'engranatge per exemple)
+
+
+Pantalla 2a — Catàleg (Manual)
+
+    Barra de cerca o filtre (amb/sense alcohol)
+    Llista de targetes de còctels, cadascuna amb: nom, descripció i foto
+    Còctels sense estoc visibles però bloquejats
+    Clicar targeta → Pantalla 3
+
+
+Pantalla 2b — Aleatori
+
+    Botó gran "Sorprèn-me"
+    En clicar apareix un còctel a l'atzar amb nom, descripció i foto
+    Botó "Aquest!" → Pantalla 3
+    Botó "Un altre" → torna a generar
+
+
+Pantalla 2c — Emocions
+
+    Títol "Com et sents avui?"
+    4 cares grans clicables (feliç, trist, estressat, romàntic)
+    En clicar → la IA genera un còctel → mostra nom i descripció
+    Botó "Preparar-lo" → Pantalla 3
+
+
+Pantalla 2d — IA (xat)
+
+    Camp de text "Descriu-me què vols..."
+    Botó "Enviar"
+    La IA respon amb nom del còctel i descripció
+    Botó "Preparar-lo" → Pantalla 3
+
+
+Pantalla 3 — Confirmació
+
+    Resum del còctel escollit (nom, ingredients i quantitats)
+    Checkbox "+18 anys" obligatori
+    Captcha
+    Botó "Confirmar comanda" → Pantalla 4
+
+
+Pantalla 4 — Espera
+
+    Nom del còctel que s'està preparant
+    Animació de la coctelera
+    Posició a la cua ("Ets el 2n de la cua")
+    Estat en temps real: "Esperant → Preparant → Llest!"
+    Quan acaba → missatge "La teva beguda és llesta! 🍸"
+
+
+Pantalla 5 — Admin
+
+    Login amb contrasenya
+    Dues pestanyes:
+
+        Estoc — taula amb les 6 posicions, ingredient assignat i ml restants. Botó per editar cada posició
+        Vendes — historial de comandes amb hora i còctel demanat

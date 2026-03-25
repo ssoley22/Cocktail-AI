@@ -40,7 +40,6 @@ def get_coctel(id):
         connexio.close()
         return None
     
-
     ingredients = connexio.execute("""
                                     SELECT i.ID_Ingredient, i.Nom_Liquid, r.Quantitat_ml 
                                     FROM Receptes r 
@@ -72,3 +71,37 @@ def get_muntatge():
 
     return [dict(fila) for fila in llistat]
 
+
+def get_ingredients():
+    '''
+    Retorna una llista amb tots els ingredients de la base de dades
+    [{'ID_Ingredient': , 'Nom_Liquid': , 'Te_Alcohol': }, ...]
+    '''
+    connexio = connectar()
+    llistat = connexio.execute("SELECT * FROM Ingredients").fetchall()
+    connexio.close()
+    return [dict(fila) for fila in llistat]
+
+for a in get_ingredients():
+    print(a)
+
+
+def coctel_disponible(coctel):
+    # coctel = {'ID_Coctel': ,'Nom_Coctel': ,'Descripcio': ,'Recepta': [{'ID_Ingredient': ,'Nom_Liquid': ,'Quantitat_ml': },...]}
+    muntatge = get_muntatge()  # [{'Posicio': , 'ID_Ingredient': , 'Nom_Liquid': , 'Capacitat_Actual_ml': }, ...]
+    
+    for ingredient in coctel["Recepta"]:
+        for ampolla in muntatge:
+            if ingredient["ID_Ingredient"] == ampolla["ID_Ingredient"]:
+                if ampolla["Capacitat_Actual_ml"] >= ingredient["Quantitat_ml"]:
+                    return coctel
+
+
+def get_coctels_disponibles():
+    ll_completa = get_coctels()
+    ll_disponibles = []
+
+    for coctel in ll_completa:
+        ll_disponibles.append(coctel_disponible(coctel))
+
+    return ll_disponibles

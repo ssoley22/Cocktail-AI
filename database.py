@@ -11,21 +11,6 @@ def connectar():
     return connexio
 
 
-def get_coctels():
-    '''
-    Retorna una llista amb tots els còctels de la base de dades
-    [{'ID_Coctel': , 'Nom_Coctel': , 'Descripcio': }, ...]
-    '''
-    # Obrim la connexió a la base de dades
-    connexio = connectar()  
-    # Executem la consulta i guardem els resultats
-    llistat = connexio.execute("SELECT * FROM Coctels").fetchall()
-    # Tanquem la connexió
-    connexio.close()
-    # Retornem els resultats convertits a llista de diccionaris
-    return [dict(fila) for fila in llistat]
-
-
 def get_coctel(id):
     '''
     Retorna un còctel concret amb els seus ingredients
@@ -82,26 +67,56 @@ def get_ingredients():
     connexio.close()
     return [dict(fila) for fila in llistat]
 
-for a in get_ingredients():
-    print(a)
-
-
-def coctel_disponible(coctel):
-    # coctel = {'ID_Coctel': ,'Nom_Coctel': ,'Descripcio': ,'Recepta': [{'ID_Ingredient': ,'Nom_Liquid': ,'Quantitat_ml': },...]}
-    muntatge = get_muntatge()  # [{'Posicio': , 'ID_Ingredient': , 'Nom_Liquid': , 'Capacitat_Actual_ml': }, ...]
-    
-    for ingredient in coctel["Recepta"]:
-        for ampolla in muntatge:
-            if ingredient["ID_Ingredient"] == ampolla["ID_Ingredient"]:
-                if ampolla["Capacitat_Actual_ml"] >= ingredient["Quantitat_ml"]:
-                    return coctel
-
-
 def get_coctels_disponibles():
-    ll_completa = get_coctels()
-    ll_disponibles = []
+    '''
+    Retorna una llista amb tots els còctels de la base de dades que es poden preparar
+    [{'ID_Coctel': , 'Nom_Coctel': , 'Descripcio': }, ...]
+    '''
+    # Obrim la connexió a la base de dades
+    connexio = connectar()  
+    # Executem la consulta i guardem els resultats
+    llistat = connexio.execute("""SELECT c.ID_Coctel, c.Nom_Coctel, c.Descripcio
+                               FROM Coctels c
+                               WHERE NOT EXISTS (
+                                    SELECT 1 FROM Receptes r
+                                    LEFT JOIN Muntatge m ON r.ID_Ingredient = m.ID_Ingredient
+                                    WHERE r.ID_Coctel = c.ID_Coctel
+                                    AND (
+                                        m.ID_Ingredient IS NULL
+                                        OR  m.Capacitat_Actual_ml < r.Quantitat_ml
+                                    )
+                               )
+                               """).fetchall()
+    # Tanquem la connexió
+    connexio.close()
+    # Retornem els resultats convertits a llista de diccionaris
+    return [dict(fila) for fila in llistat]
 
-    for coctel in ll_completa:
-        ll_disponibles.append(coctel_disponible(coctel))
+def update_muntatge(posicio, id_ingredient, capacitat):
+    '''
+    Acutalitza una posició del muntatge amb un nou ingredient i capacitat
+    '''
+    connexio = connectar()
 
-    return ll_disponibles
+    connexio.execute("""UPDATE Muntatge
+                     SET Capacitat_Actual_ml = ?, ID_Ingredient = ?
+                     Where Posicio = ?""", (capacitat, id_ingredient, posicio))
+    
+    connexio.commit()
+    connexio.close()
+
+
+def restar_estoc(id_coctel):
+    '''
+    Resta les quantitats requerides per una recepta de l'estoc actual del muntatge
+    '''
+    recepta = get_coctel(id_coctel)["Recepta"] # [{'ID_Ingredient': ,'Nom_Liquid': ,'Quantitat_ml': },...]}
+    connexio = connectar()
+    
+    for ingredient in recepta:
+        connexio.execute("""UPDATE Muntatge
+                         SET Capacitat_Actual_ml = Capacitat_Actual_ml - ?
+                         WHERE ID_Ingredient = ?
+                         """, (ingredient["Quantitat_ml"], ingredient["ID_Ingredient"]))
+    connexio.commit()
+    connexio.close()

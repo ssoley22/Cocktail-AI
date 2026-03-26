@@ -1,42 +1,31 @@
 from flask import Flask, jsonify
 import json
+import database
 
+# Inicialitzem l'aplicació Flask
 app = Flask(__name__)
 
-with open("coctels.json", "r") as coctels:
-    ll_coctels = json.load(coctels)
-with open("ingredients.json", "r") as ingredients:
-    ll_ingredients = json.load(ingredients)
 
-@app.route("/api/hola")
-def hola():
-    return jsonify({
-        "missatge": "Hola món",
-        "estat": "OK"
-    })
+@app.route("/")
+def inici():
+    return "a"
 
 
-@app.route("/api/adeu")
-def adeu():
-    return "Fins aviat!"
+@app.route("/api/coctels")
+def api_coctels():
+    coctels = database.get_coctels_disponibles()
+    return jsonify(coctels)
 
 
-@app.route("/api/coctels/<int:id>")
-def trobar_coctel(id):
-    for coctel in ll_coctels:
-        if coctel["id"] == id:
-            return jsonify(coctel)
-    return jsonify({"error": "Còctel no trobat"})
-
-
-@app.route("/api/coctels/")
-def coctels():
-    return jsonify(ll_coctels)
-
-@app.route("/api/ingredients/")
-def ingredients():
-    return jsonify(ll_ingredients)
+@app.route("/api/muntatge")
+def muntatge():
+    muntatge = database.get_muntatge()
+    return jsonify(muntatge)
 
 
 if __name__ == "__main__":
+    '''
+    Permet que cada cop que modifiques l'arxiu i el guardes reinici el servidor.
+    Només funciona si l'executes per terminal:  python app.py
+    '''
     app.run(debug=True, port=5000)

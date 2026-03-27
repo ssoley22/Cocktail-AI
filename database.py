@@ -4,6 +4,24 @@ import os
 # Ruta al fitxer de la base de dades
 RUTA_DB = os.path.join(os.path.dirname(__file__), "database.db")
 
+"""
+ESQUEMA BASE DE DADES (database.db)
+===================================
+1. Ingredients: [ID_Ingredient, Nom_Liquid, Te_Alcohol, Categoria]
+   Ex: (7, 'Absolut Vodka', 1, 'Vodka'), (35, 'Fanta Llimona', 0, 'Llimona')
+
+2. Coctels:     [ID_Coctel, Nom_Coctel, Descripcio]
+   Ex: (1, 'Vodka Llimona', ''), (2, 'Rom Sunrise', '')
+
+3. Receptes:    [ID_Coctel, Categoria, Quantitat_ml, Ordre]
+   Ex: (1, 'Vodka', 50, 1), (1, 'Llimona', 200, 2)
+
+4. Muntatge:    [Posicio, ID_Ingredient, Capacitat_Actual_ml]
+   Ex: (1, 7, 750), (2, 18, 1000)
+"""
+
+
+
 # Obre i retorna una connexió a la base de dades
 def connectar():
     connexio = sqlite3.connect(RUTA_DB)

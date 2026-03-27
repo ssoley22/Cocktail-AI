@@ -29,10 +29,40 @@ def connectar():
     return connexio
 
 
+def get_ingredients():
+    '''
+    Retorna una llista amb tots els ingredients de la base de dades
+    [{'ID_Ingredient': , 'Nom_Liquid': , 'Te_Alcohol': , 'Categoria': }, ...]
+    '''
+    connexio = connectar()
+    llistat = connexio.execute("SELECT * FROM Ingredients").fetchall()
+    connexio.close()
+    return [dict(fila) for fila in llistat]
+
+
+def get_muntatge():
+    '''
+    Retorna l'estat de les 6 posicions del carril
+    [{'Posicio': ,'ID_Ingredient': ,'Nom_Liquid': ,'Categoria': ,'Capacitat_Actual_ml': }, ...]
+    '''
+    connexio = connectar()
+    # Busquem les 6 posicions amb el nom de l'ingredient de cada una
+    llistat = connexio.execute("""
+                                SELECT m.Posicio, m.ID_Ingredient, i.Nom_Liquid, i.Categoria,  m.Capacitat_Actual_ml
+                                FROM Muntatge m
+                                JOIN Ingredients i ON m.ID_Ingredient = i.ID_Ingredient
+                                ORDER BY m.Posicio
+    """).fetchall()
+    connexio.close()
+
+    return [dict(fila) for fila in llistat]
+
+
+
 def get_coctel(id):
     '''
     Retorna un còctel concret amb els seus ingredients
-    {'ID_Coctel': ,'Nom_Coctel': ,'Descripcio': ,'Recepta': [{'ID_Ingredient': ,'Nom_Liquid': ,'Quantitat_ml': },...]}
+    {'ID_Coctel': ,'Nom_Coctel': ,'Descripcio': ,'Recepta': [{'Posicio': ,'Nom_Liquid': ,'Quantitat_ml': ,'Ordre': },...]}
     '''
     connexio = connectar()
     # Busquem el còctel per ID
@@ -44,10 +74,12 @@ def get_coctel(id):
         return None
     
     ingredients = connexio.execute("""
-                                    SELECT i.ID_Ingredient, i.Nom_Liquid, r.Quantitat_ml 
+                                    SELECT m.Posicio, i.Nom_Liquid, r.Quantitat_ml , r.Ordre
                                     FROM Receptes r 
-                                     JOIN Ingredients i ON r.ID_Ingredient = i.ID_Ingredient 
-                                     WHERE r.ID_Coctel = ?
+                                    JOIN Ingredients i ON i.Categoria = r.Categoria
+                                    JOIN Muntatge m ON m.ID_Ingredient = i.ID_Ingredient
+                                    WHERE r.ID_Coctel = ?
+                                    ORDER BY r.Ordre ASC
     """, (id,)).fetchall()
     connexio.close()
 
@@ -56,34 +88,6 @@ def get_coctel(id):
     resultat["Recepta"] = [dict(i) for i in ingredients]
     return resultat
 
-
-def get_muntatge():
-    '''
-    Retorna l'estat de les 6 posicions del carril
-    [{'Posicio': , 'ID_Ingredient': , 'Nom_Liquid': , 'Capacitat_Actual_ml': }, ...]
-    '''
-    connexio = connectar()
-    # Busquem les 6 posicions amb el nom de l'ingredient de cada una
-    llistat = connexio.execute("""
-                                SELECT m.Posicio, m.ID_Ingredient, i.Nom_Liquid, m.Capacitat_Actual_ml
-                                FROM Muntatge m
-                                JOIN Ingredients i ON m.ID_Ingredient = i.ID_Ingredient
-                                ORDER BY m.Posicio
-    """).fetchall()
-    connexio.close()
-
-    return [dict(fila) for fila in llistat]
-
-
-def get_ingredients():
-    '''
-    Retorna una llista amb tots els ingredients de la base de dades
-    [{'ID_Ingredient': , 'Nom_Liquid': , 'Te_Alcohol': }, ...]
-    '''
-    connexio = connectar()
-    llistat = connexio.execute("SELECT * FROM Ingredients").fetchall()
-    connexio.close()
-    return [dict(fila) for fila in llistat]
 
 def get_coctels_disponibles():
     '''
@@ -97,11 +101,13 @@ def get_coctels_disponibles():
                                FROM Coctels c
                                WHERE NOT EXISTS (
                                     SELECT 1 FROM Receptes r
-                                    LEFT JOIN Muntatge m ON r.ID_Ingredient = m.ID_Ingredient
                                     WHERE r.ID_Coctel = c.ID_Coctel
-                                    AND (
-                                        m.ID_Ingredient IS NULL
-                                        OR  m.Capacitat_Actual_ml < r.Quantitat_ml
+                                    AND r.Categoria 
+                                    NOT IN (
+                                    SELECT i.Categoria 
+                                    FROM Muntatge m 
+                                    JOIN Ingredients i ON m.ID_Ingredient = i.ID_Ingredient
+                                    WHERE m.Capacitat_Actual_ml >= r.Quantitat_ml
                                     )
                                )
                                """).fetchall()
@@ -128,13 +134,14 @@ def restar_estoc(id_coctel):
     '''
     Resta les quantitats requerides per una recepta de l'estoc actual del muntatge
     '''
-    recepta = get_coctel(id_coctel)["Recepta"] # [{'ID_Ingredient': ,'Nom_Liquid': ,'Quantitat_ml': },...]}
+    recepta = get_coctel(id_coctel)["Recepta"] # [{'Posicio': ,'Nom_Liquid': ,'Quantitat_ml': ,'Ordre': },...]
     connexio = connectar()
     
     for ingredient in recepta:
         connexio.execute("""UPDATE Muntatge
                          SET Capacitat_Actual_ml = Capacitat_Actual_ml - ?
-                         WHERE ID_Ingredient = ?
-                         """, (ingredient["Quantitat_ml"], ingredient["ID_Ingredient"]))
+                         WHERE Posicio = ?
+                         """, (ingredient["Quantitat_ml"], ingredient["Posicio"]))
     connexio.commit()
     connexio.close()
+

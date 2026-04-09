@@ -30,3 +30,4 @@
 1. Crear un fitxer anomenat `.env` a l'arrel del projecte (al mateix nivell que `app.py`).
 2. Afegir la següent línia substituint el text per la teva clau real:
    `GEMINI_API_KEY=la_teva_clau_de_google_ai_studio`
+

@@ -1,78 +1,116 @@
-
 <!DOCTYPE html>
 <html lang="ca">
 <head>
     <meta charset="UTF-8">
-    <title>Cocktail AI 🍸</title> 
+    <title>Cocktail IA - Inici</title>
     <style>
-        /* Fons de pantalla modern */
-        body {
-            background-color: #0b0d17; /* Blau nit molt fosc */
-            color: white;
-            font-family: 'Segoe UI', sans-serif;
-            text-align: center;
-            padding: 50px 20px;
+        body { 
+            background-color: #05050a; 
+            color: white; 
+            font-family: 'Segoe UI', sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0; 
         }
 
-        h1 {
+        h1 { 
+            font-size: 3.5rem; 
+            margin-bottom: 50px; 
+            color: #7b61ff; 
+            text-shadow: 0 0 20px rgba(123, 97, 255, 0.4); 
+            letter-spacing: 2px;
+        }
+        
+        .grid-botons { 
+            display: grid; 
+            grid-template-columns: repeat(2, 240px); 
+            gap: 30px; 
+        }
+        
+        .boto-principal { 
+            background-color: #121421; 
+            border: 2px solid #333; 
+            color: white; 
+            padding: 50px 20px; 
+            text-align: center; 
+            text-decoration: none; 
+            border-radius: 30px; 
+            font-size: 1.4rem; 
+            transition: 0.3s ease;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 15px;
+        }
+
+        .boto-principal span {
             font-size: 3rem;
-            color: #00f2ff; /* Blau neó */
-            text-shadow: 0 0 10px #00f2ff;
-            margin-bottom: 40px;
+            transition: 0.3s;
         }
 
-        /* Contenidor dels botons per posar-los un sota l'altre */
-        .menu {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
+        .boto-principal:hover { 
+            border-color: #7b61ff; 
+            background-color: #1a1d33; 
+            transform: translateY(-8px); 
+            box-shadow: 0 10px 25px rgba(123, 97, 255, 0.2); 
         }
 
-        /* El nou estil dels teus botons */
-        .btn-menu {
-            background-color: #1a1f35;
-            color: #00f2ff;
-            border: 2px solid #00f2ff;
-            padding: 20px 40px;
-            font-size: 1.5rem;
-            border-radius: 15px;
-            width: 80%;
-            max-width: 400px;
-            cursor: pointer;
-            transition: all 0.3s ease; /* Efecte suau */
-            font-weight: bold;
+        .boto-principal:hover span {
+            transform: scale(1.2);
+        }
+        
+        /* Icona de configuració (Admin) */
+        .admin-link { 
+            position: absolute; 
+            top: 30px; 
+            right: 30px; 
+            text-decoration: none; 
+            font-size: 2.2rem; 
+            opacity: 0.3; 
+            transition: 0.4s; 
+        }
+        .admin-link:hover { 
+            opacity: 1; 
+            transform: rotate(90deg); 
+            filter: drop-shadow(0 0 10px #7b61ff); 
         }
 
-        /* Quan el ratolí passa per sobre */
-        .btn-menu:hover {
-            background-color: #00f2ff;
-            color: #0b0d17;
-            box-shadow: 0 0 30px #00f2ff;
-            transform: scale(1.05); /* Es fa una mica més gran */
-        }
-
-        /* Un color diferent per al botó de la IA */
-        .ia {
-            color: #bc13fe;
-            border-color: #bc13fe;
-        }
-
-        .ia:hover {
-            background-color: #bc13fe;
-            color: white;
-            box-shadow: 0 0 30px #bc13fe;
+        /* Només deixem desactivat el Xat IA de moment */
+        .desactivat { 
+            opacity: 0.3; 
+            cursor: not-allowed; 
+            pointer-events: none; 
+            filter: grayscale(1);
         }
     </style>
 </head>
 <body>
 
-    <h1>Cocktail AI 🍸</h1>
+    <a href="/admin" class="admin-link" title="Configuració">⚙️</a>
 
-    <div class="menu">
-        <button class="btn-menu">📖 Catàleg de Còctels</button>
-        <button class="btn-menu">🎛️ Gestió d'Inventari</button>
-        <button class="btn-menu ia">✨ Demanar a la IA</button>
+    <h1>COCKTAIL IA 🍸</h1>
+    
+    <div class="grid-botons">
+        <a href="/manual" class="boto-principal">
+            <span>📖</span>
+            Manual
+        </a>
+        
+        <a href="/aleatori" class="boto-principal">
+            <span>🎲</span>
+            Aleatori
+        </a>
+        
+        <a href="/emocions" class="boto-principal">
+            <span>😊</span>
+            Emocions
+        </a>
+
+        <a href="/xat" class="boto-principal"><span>🤖</span>IA Xat</a>
     </div>
 
 </body>

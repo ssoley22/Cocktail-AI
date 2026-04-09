@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Manual - Cocktail IA</title>
+    <style>
+        body { background-color: #05050a; color: white; font-family: sans-serif; padding: 40px; margin: 0; }
+        .btn-back { position: fixed; top: 25px; left: 25px; color: #888; text-decoration: none; font-weight: bold; border: 1px solid #333; padding: 10px 15px; border-radius: 12px; background: rgba(18, 20, 33, 0.8); z-index: 100; transition: 0.3s; }
+        .btn-back:hover { color: #7b61ff; border-color: #7b61ff; background: #121421; }
+        .header { text-align: center; margin-top: 50px; }
+        h1 { color: #7b61ff; font-size: 2.5rem; margin-bottom: 20px; }
+        .controls { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; align-items: center; }
+        .search-bar { width: 100%; padding: 15px 25px; border-radius: 30px; border: 1px solid #333; background: #121421; color: white; outline: none; }
+        .filtres { display: flex; gap: 10px; }
+        .btn-filtre { background: #121421; border: 1px solid #444; color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; transition: 0.3s; }
+        .btn-filtre.active { background: #7b61ff; border-color: #7b61ff; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; margin-top: 40px; }
+        .card { background: #08080c; border-radius: 25px; border: 1px solid #222; overflow: hidden; text-decoration: none; color: white; transition: 0.4s; position: relative; display: block; height: 100%; }
+        .card:hover:not(.bloquejada) { border-color: #7b61ff; transform: translateY(-5px); }
+        .card.bloquejada { opacity: 0.2; filter: grayscale(1); cursor: not-allowed; border-style: dotted; }
+        .card-body { padding: 20px; }
+        .badge-estoc { position: absolute; top: 15px; right: 15px; background: #222; color: #555; padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; border: 1px solid #333; }
+    </style>
+</head>
+<body>
+    <a href="/" class="btn-back">← INICI</a>
+    <div class="header">
+        <h1>Selecció de Còctels 🍸</h1>
+        <div class="controls">
+            <input type="text" id="cercador" class="search-bar" placeholder="Busca un còctel...">
+            <div class="filtres">
+                <button class="btn-filtre active" onclick="filtrar('tots', this)">Tots</button>
+                <button class="btn-filtre" onclick="filtrar('amb', this)">Amb Alcohol</button>
+                <button class="btn-filtre" onclick="filtrar('sense', this)">Sense Alcohol</button>
+            </div>
+        </div>
+    </div>
+    <div class="grid">
+        {% for coctel in coctels %}
+        <div class="card-item" data-nom="{{ coctel.Nom_Coctel | lower }}" data-alcohol="{{ 'amb' if coctel.Alcoholic == 1 else 'sense' }}">
+            {% if coctel.disponible %}
+            <a href="/confirmacio/{{ coctel.ID_Coctel }}" class="card">
+                <div style="height: 150px; background: #0a0b16; display: flex; align-items: center; justify-content: center; font-size: 3.5rem;">🍹</div>
+                <div class="card-body"><h3>{{ coctel.Nom_Coctel }}</h3><p style="color:#555;">{{ coctel.Descripcio }}</p></div>
+            </a>
+            {% else %}
+            <div class="card bloquejada">
+                <span class="badge-estoc">SENSE INGREDIENTS</span>
+                <div style="height: 150px; display: flex; align-items: center; justify-content: center; font-size: 3.5rem;">🍹</div>
+                <div class="card-body"><h3>{{ coctel.Nom_Coctel }}</h3><p>No disponible.</p></div>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    <script>
+        function aplicarFiltres() {
+            const text = document.getElementById('cercador').value.toLowerCase();
+            document.querySelectorAll('.card-item').forEach(card => {
+                const matchText = card.dataset.nom.includes(text);
+                const matchAlc = (window.filtre === 'tots' || !window.filtre || card.dataset.alcohol === window.filtre);
+                card.style.display = (matchText && matchAlc) ? 'block' : 'none';
+            });
+        }
+        function filtrar(tipus, boto) {
+            window.filtre = tipus;
+            document.querySelectorAll('.btn-filtre').forEach(b => b.classList.remove('active'));
+            boto.classList.add('active');
+            aplicarFiltres();
+        }
+        document.getElementById('cercador').addEventListener('input', aplicarFiltres);
+    </script>
+</body>
+</html>

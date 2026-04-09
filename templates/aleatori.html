@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Sorprèn-me - Cocktail IA</title>
+    <style>
+        body { 
+            background-color: #05050a; 
+            color: white; 
+            font-family: 'Segoe UI', sans-serif; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            margin: 0; 
+        }
+
+        /* El botó unificat de tornada */
+        .btn-back { 
+            position: fixed; top: 25px; left: 25px; 
+            color: #888; text-decoration: none; font-weight: bold; 
+            border: 1px solid #333; padding: 10px 15px; border-radius: 12px; 
+            background: rgba(18, 20, 33, 0.8); z-index: 100; transition: 0.3s; 
+        }
+        .btn-back:hover { color: #7b61ff; border-color: #7b61ff; transform: translateX(-5px); }
+
+        /* Contenidor central amb estil "sorpresa" */
+        .container { 
+            background: #121421; 
+            padding: 50px; 
+            border-radius: 40px; 
+            border: 2px dashed #7b61ff; /* Marc clàssic de "sorpresa" */
+            text-align: center; 
+            max-width: 450px; 
+            width: 90%; 
+            box-shadow: 0 0 50px rgba(123, 97, 255, 0.15);
+        }
+        
+        .icona-random { 
+            font-size: 6rem; margin-bottom: 20px; 
+            animation: bounce 1.5s infinite; 
+            display: inline-block;
+        }
+        @keyframes bounce { 
+            0%, 100% { transform: translateY(0) rotate(0deg); } 
+            50% { transform: translateY(-15px) rotate(5deg); } 
+        }
+
+        h1 { color: #7b61ff; font-size: 2.8rem; margin: 0; }
+        .subtext { color: #555; text-transform: uppercase; letter-spacing: 3px; font-size: 0.8rem; margin-bottom: 10px; }
+        .desc { color: #888; font-style: italic; margin: 20px 0 40px 0; min-height: 50px; line-height: 1.5; }
+
+        .grup-accions { display: flex; flex-direction: column; gap: 15px; }
+        
+        /* Botó principal d'acceptar */
+        .btn-si { 
+            background: #7b61ff; color: white; padding: 22px; border-radius: 20px; 
+            text-decoration: none; font-weight: bold; font-size: 1.3rem; 
+            transition: 0.3s; border: none; cursor: pointer;
+            box-shadow: 0 10px 25px rgba(123, 97, 255, 0.3);
+        }
+        .btn-si:hover { background: #8e77ff; transform: scale(1.03); }
+
+        /* Botó per tornar a provar sort */
+        .btn-refresh { 
+            background: transparent; color: #7b61ff; padding: 15px; border-radius: 20px; 
+            text-decoration: none; border: 1px solid #7b61ff; font-weight: bold; 
+            cursor: pointer; transition: 0.3s; 
+        }
+        .btn-refresh:hover { background: rgba(123, 97, 255, 0.1); }
+    </style>
+</head>
+<body>
+
+    <a href="/" class="btn-back">← INICI</a>
+
+    <div class="container">
+        <div class="icona-random">🎲</div>
+        <p class="subtext">La teva sorpresa és:</p>
+        <h1>{{ coctel.Nom_Coctel }}</h1>
+        <p class="desc">"{{ coctel.Descripcio if coctel.Descripcio else "Una combinació mística seleccionada per la nostra IA." }}"</p>
+
+        <div class="grup-accions">
+            <a href="/confirmacio/{{ coctel.ID_Coctel }}?origen=/aleatori" class="btn-si">M'AGRADA, AQUEST! ✅</a>
+            
+            <a href="/aleatori" class="btn-refresh">PROVA SORT DE NOU 🔄</a>
+        </div>
+    </div>
+
+</body>
+</html>

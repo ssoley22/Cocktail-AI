@@ -58,10 +58,18 @@ def get_muntatge():
 def get_coctel(id):
     '''
     Retorna un còctel concret amb els seus ingredients
-    {'ID_Coctel': ,'Nom_Coctel': ,'Descripcio': ,'Recepta': [{'Posicio': ,'Nom_Liquid': ,'Quantitat_ml': ,'Ordre': },...]}
+    {'ID_Coctel': ,'Nom_Coctel': ,'Descripcio': ,'Alcoholic': ,'Recepta': [{'Posicio': ,'Nom_Liquid': ,'Quantitat_ml': ,'Ordre': },...]}
     '''
     connexio = connectar()
-    coctel = connexio.execute("SELECT * FROM Coctels WHERE ID_Coctel = ?", (id,)).fetchone()
+    coctel = connexio.execute("""
+                                SELECT c.*,
+                                (SELECT MAX(i.Te_Alcohol)
+                                FROM Receptes r
+                                JOIN Ingredients i ON i.Categoria = r.Categoria
+                                WHERE r.ID_Coctel = c.ID_Coctel) as Alcoholic
+                                FROM Coctels c
+                                WHERE c.ID_Coctel = ?
+    """, (id,)).fetchone()
 
     if coctel is None:
         connexio.close()
@@ -79,6 +87,7 @@ def get_coctel(id):
     connexio.close()
 
     resultat = dict(coctel)
+    resultat["Alcoholic"] = int(resultat["Alcoholic"]) if resultat["Alcoholic"] is not None else 0
     resultat["Recepta"] = [dict(i) for i in ingredients]
     return resultat
 
@@ -103,6 +112,24 @@ def get_coctels_disponibles():
                                     )
                                )
                                """).fetchall()
+    connexio.close()
+    return [dict(fila) for fila in llistat]
+
+
+def get_tots_els_coctels():
+    '''
+    Retorna tots els còctels (disponibles o no) amb camp Alcoholic calculat.
+    [{'ID_Coctel': , 'Nom_Coctel': , 'Descripcio': , 'Alcoholic': }, ...]
+    '''
+    connexio = connectar()
+    llistat = connexio.execute("""
+        SELECT c.*,
+        (SELECT MAX(i.Te_Alcohol)
+         FROM Receptes r
+         JOIN Ingredients i ON i.Categoria = r.Categoria
+         WHERE r.ID_Coctel = c.ID_Coctel) as Alcoholic
+        FROM Coctels c
+    """).fetchall()
     connexio.close()
     return [dict(fila) for fila in llistat]
 

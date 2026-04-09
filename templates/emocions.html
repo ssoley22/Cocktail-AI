@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Com et sents? - Cocktail IA</title>
+    <style>
+        body { 
+            background-color: #05050a; 
+            color: white; 
+            font-family: 'Segoe UI', sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0; 
+            overflow: hidden;
+        }
+
+        .btn-back { 
+            position: fixed; top: 25px; left: 25px; 
+            color: #888; text-decoration: none; font-weight: bold; 
+            border: 1px solid #333; padding: 10px 15px; border-radius: 12px; 
+            background: rgba(18, 20, 33, 0.8); transition: 0.3s; 
+        }
+        .btn-back:hover { color: #7b61ff; border-color: #7b61ff; transform: translateX(-5px); }
+
+        h1 { font-size: 2.8rem; margin-bottom: 60px; color: #eee; text-align: center; }
+
+        /* CANVI A HORITZONTAL: 4 columnes d'una sola fila */
+        .container-emocions { 
+            display: grid; 
+            grid-template-columns: repeat(4, 200px); 
+            gap: 20px; 
+            justify-content: center;
+        }
+        
+        .face-btn { 
+            background: #121421; 
+            border: 2px solid #222; 
+            border-radius: 35px; 
+            padding: 45px 10px; 
+            text-decoration: none; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 20px; 
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .emoji { font-size: 5rem; filter: grayscale(0.4); transition: 0.3s; }
+
+        /* Efectes de color en passar el ratolí */
+        .alegre:hover { border-color: #4caf50; background: rgba(76, 175, 80, 0.1); transform: translateY(-15px); }
+        .alegre:hover .emoji { filter: grayscale(0); transform: scale(1.15); }
+        
+        .trist:hover { border-color: #2196f3; background: rgba(33, 150, 243, 0.1); transform: translateY(-15px); }
+        .trist:hover .emoji { filter: grayscale(0); transform: scale(1.15); }
+
+        .estressat:hover { border-color: #ff9800; background: rgba(255, 152, 0, 0.1); transform: translateY(-15px); }
+        .estressat:hover .emoji { filter: grayscale(0); transform: scale(1.15); }
+
+        .enfadat:hover { border-color: #f44336; background: rgba(244, 67, 54, 0.1); transform: translateY(-15px); }
+        .enfadat:hover .emoji { filter: grayscale(0); transform: scale(1.15); }
+
+        .nom-emocio { font-weight: bold; font-size: 0.9rem; color: #555; letter-spacing: 2px; }
+        .face-btn:hover .nom-emocio { color: white; }
+    </style>
+</head>
+<body>
+
+    <a href="/" class="btn-back">← INICI</a>
+
+    <h1>Com et sents avui?</h1>
+
+    <div class="container-emocions">
+        <a href="/recomanacio/alegre" class="face-btn alegre">
+            <span class="emoji">😄</span>
+            <span class="nom-emocio">ALEGRE</span>
+        </a>
+        <a href="/recomanacio/trist" class="face-btn trist">
+            <span class="emoji">😢</span>
+            <span class="nom-emocio">TRIST</span>
+        </a>
+        <a href="/recomanacio/estressat" class="face-btn estressat">
+            <span class="emoji">😫</span>
+            <span class="nom-emocio">ESTRESSAT</span>
+        </a>
+        <a href="/recomanacio/enfadat" class="face-btn enfadat">
+            <span class="emoji">😡</span>
+            <span class="nom-emocio">ENFADAT</span>
+        </a>
+    </div>
+
+</body>
+</html>
+

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Xat IA - Cocktail IA</title>
+    <style>
+        body { background-color: #05050a; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        
+        .btn-back { position: fixed; top: 25px; left: 25px; color: #888; text-decoration: none; font-weight: bold; border: 1px solid #333; padding: 10px 15px; border-radius: 12px; background: rgba(18, 20, 33, 0.8); transition: 0.3s; z-index: 100; }
+        .btn-back:hover { color: #7b61ff; border-color: #7b61ff; transform: translateX(-5px); }
+
+        .chat-container { width: 90%; max-width: 600px; display: flex; flex-direction: column; gap: 20px; }
+        
+        h1 { font-size: 2rem; color: #7b61ff; text-align: center; margin-bottom: 30px; }
+
+        /* Bombolles de xat */
+        .bubble { padding: 20px; border-radius: 25px; max-width: 80%; line-height: 1.5; position: relative; }
+        .user-bubble { background: #1a1d33; align-self: flex-end; border-bottom-right-radius: 5px; border: 1px solid #333; }
+        .ai-bubble { background: #121421; align-self: flex-start; border-bottom-left-radius: 5px; border: 1px solid #7b61ff; }
+
+        /* Camp d'entrada */
+        .input-group { display: flex; gap: 10px; margin-top: 30px; background: #121421; padding: 10px; border-radius: 35px; border: 1px solid #333; }
+        .input-group input { flex: 1; background: transparent; border: none; color: white; padding: 10px 20px; outline: none; font-size: 1rem; }
+        .btn-send { background: #7b61ff; border: none; color: white; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .btn-send:hover { transform: scale(1.1); background: #8e77ff; }
+
+        /* Botó de preparar que apareixerà després */
+        .btn-preparar-ia { display: none; margin-top: 20px; background: #7b61ff; color: white; text-align: center; padding: 15px; border-radius: 20px; text-decoration: none; font-weight: bold; animation: fadeIn 0.5s forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <a href="/" class="btn-back">← INICI</a>
+
+    <div class="chat-container">
+        <h1>Explica'm què vols... 🤖</h1>
+
+        <div class="bubble ai-bubble">
+            Hola! Soc la teva Cocktail IA. Digue'm com ha anat el dia o quins sabors t'agraden i et prepararé una recepta única.
+        </div>
+
+        <div id="chat-box" style="display: flex; flex-direction: column; gap: 15px;"></div>
+
+        <a href="#" id="btn-resultat" class="btn-preparar-ia">PREPARAR PROPOSTA 🍹</a>
+
+        <div class="input-group">
+            <input type="text" id="user-input" placeholder="Ex: Vull algo refrescant amb llimona...">
+            <button class="btn-send" onclick="enviarMissatge()">➔</button>
+        </div>
+    </div>
+
+    <script>
+        function enviarMissatge() {
+            const input = document.getElementById('user-input');
+            const chatBox = document.getElementById('chat-box');
+            const btnResultat = document.getElementById('btn-resultat');
+
+            if (input.value.trim() === "") return;
+
+            // 1. Afegir bombolla usuari
+            const userDiv = document.createElement('div');
+            userDiv.className = 'bubble user-bubble';
+            userDiv.innerText = input.value;
+            chatBox.appendChild(userDiv);
+
+            const textUsuari = input.value;
+            input.value = "";
+
+            // 2. Simular resposta (Estructura)
+            setTimeout(() => {
+                const aiDiv = document.createElement('div');
+                aiDiv.className = 'bubble ai-bubble';
+                aiDiv.innerText = "Entesos! Analitzant els teus gustos... Et recomano un 'Mojito Premium'. És refrescant i encaixa amb el que m'has dit.";
+                chatBox.appendChild(aiDiv);
+                
+                // 3. Mostrar el botó de anar a confirmar
+                btnResultat.style.display = 'block';
+                btnResultat.href = "/confirmacio/1"; // Aquí anirà l'ID que triï la IA
+            }, 1000);
+        }
+        // Permetre enviar amb la tecla Enter
+        document.getElementById('user-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Evita que la pàgina es recarregui per error
+                enviarMissatge();
+            }
+        });
+    </script>
+</body>
+</html>
+

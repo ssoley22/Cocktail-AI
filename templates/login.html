@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Accés Propietari</title>
+    <style>
+        body { background: #05050a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: #121421; padding: 30px; border-radius: 15px; border: 1px solid #333; width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h3 { color: #7b61ff; margin-top: 0; }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #1c1f33; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #7b61ff; border: none; color: white; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background: #6347d1; }
+        .error { color: #ff4b4b; margin-bottom: 15px; font-size: 0.9rem; background: rgba(255,75,75,0.1); padding: 5px; border-radius: 5px; }
+        .btn-back { position: fixed; top: 25px; left: 25px; color: #888; text-decoration: none; font-weight: bold; border: 1px solid #333; padding: 10px 15px; border-radius: 12px; background: rgba(18, 20, 33, 0.8); transition: 0.3s; z-index: 100; }
+        .btn-back:hover { color: #7b61ff; border-color: #7b61ff; background: #121421; }
+    </style>
+</head>
+<body>
+    <a href="/" class="btn-back">← INICI</a>
+
+    <div class="login-card">
+        <h3>🔐 Accés Admin</h3>
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+        <form method="POST" action="/login">
+            <input type="text" name="username" placeholder="Usuari" required>
+            <input type="password" name="password" placeholder="Contrasenya" required>
+            <button type="submit">Entrar</button>
+        </form>
+    </div>
+</body>
+</html>
+

@@ -32,6 +32,7 @@
                 <button class="btn-filtre active" onclick="filtrar('tots', this)">Tots</button>
                 <button class="btn-filtre" onclick="filtrar('amb', this)">Amb Alcohol</button>
                 <button class="btn-filtre" onclick="filtrar('sense', this)">Sense Alcohol</button>
+                <button id="btn-disponibles" class="btn-filtre" style="margin-left: 30px; border-color: #7b61ff; color: #7b61ff;" onclick="toggleDisponibles(this)"> Filtrar Disponibles</button>
             </div>
         </div>
     </div>
@@ -54,20 +55,43 @@
         {% endfor %}
     </div>
     <script>
+        // Variable global per saber si estem amagant els bloquejats
+        window.nomesDisponibles = false;
+
         function aplicarFiltres() {
             const text = document.getElementById('cercador').value.toLowerCase();
             document.querySelectorAll('.card-item').forEach(card => {
                 const matchText = card.dataset.nom.includes(text);
                 const matchAlc = (window.filtre === 'tots' || !window.filtre || card.dataset.alcohol === window.filtre);
-                card.style.display = (matchText && matchAlc) ? 'block' : 'none';
+                
+                // Mirem si la targeta té la classe 'bloquejada' dins seu
+                const estaBloquejada = card.querySelector('.card').classList.contains('bloquejada');
+                const matchDisponible = window.nomesDisponibles ? !estaBloquejada : true;
+
+                card.style.display = (matchText && matchAlc && matchDisponible) ? 'block' : 'none';
             });
         }
+
         function filtrar(tipus, boto) {
             window.filtre = tipus;
-            document.querySelectorAll('.btn-filtre').forEach(b => b.classList.remove('active'));
+            // Traiem la classe 'active' de tots els botons que no siguin el de 'Disponibles'
+            document.querySelectorAll('.btn-filtre:not(#btn-disponibles)').forEach(b => b.classList.remove('active'));
             boto.classList.add('active');
             aplicarFiltres();
         }
+
+       function toggleDisponibles(boto) {
+            window.nomesDisponibles = !window.nomesDisponibles;
+            if (window.nomesDisponibles) {
+                boto.style.background = '#7b61ff'; // Lila principal
+                boto.style.color = 'white';
+            } else {
+                boto.style.background = '#121421'; // Fons fosc inactiu
+                boto.style.color = '#7b61ff';
+            }
+            aplicarFiltres();
+        }
+
         document.getElementById('cercador').addEventListener('input', aplicarFiltres);
     </script>
 </body>

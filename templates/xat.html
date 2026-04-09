@@ -79,6 +79,13 @@
                 btnResultat.href = "/confirmacio/1"; // Aquí anirà l'ID que triï la IA
             }, 1000);
         }
+        // Permetre enviar amb la tecla Enter
+        document.getElementById('user-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Evita que la pàgina es recarregui per error
+                enviarMissatge();
+            }
+        });
     </script>
 </body>
 </html>

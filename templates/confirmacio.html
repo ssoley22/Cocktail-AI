@@ -14,11 +14,14 @@
         .recepta { background: #0a0b16; padding: 20px; border-radius: 20px; text-align: left; margin: 25px 0; border: 1px solid #1a1d33; }
         
         /* SEGURETAT */
-        .seguretat-container { margin-bottom: 25px; display: flex; flex-direction: column; gap: 15px; align-items: center; }
-        .check-edat { display: flex; align-items: center; gap: 10px; color: #888; font-size: 0.9rem; cursor: pointer; }
-        .captcha-wrapper { display: flex; align-items: center; gap: 10px; background: #0a0b16; padding: 10px 15px; border-radius: 15px; border: 1px dashed #333; }
-        .captcha-text { font-family: monospace; font-weight: bold; font-size: 1.4rem; color: #7b61ff; letter-spacing: 3px; }
-        .captcha-input { background: transparent; border: 1px solid #333; color: white; width: 70px; padding: 8px; border-radius: 8px; text-align: center; outline: none; }
+        .seguretat-container { margin-bottom: 25px; display: flex; flex-direction: column; gap: 20px; align-items: center; }
+        .check-edat { display: flex; align-items: center; gap: 15px; color: #ccc; font-size: 1.1rem; cursor: pointer; }
+        .check-edat input[type="checkbox"] { transform: scale(2.5); cursor: pointer; accent-color: #7b61ff; margin-right: 5px; }     
+        .captcha-wrapper { display: flex; align-items: center; gap: 15px; background: #0a0b16; padding: 10px 20px; border-radius: 15px; border: 1px dashed #555; }
+        .captcha-text { font-family: monospace; font-weight: bold; font-size: 1.6rem; color: #7b61ff; letter-spacing: 4px; }
+        
+        .captcha-input { background: transparent; border: 2px solid #444; color: white; width: 80px; padding: 10px; border-radius: 8px; text-align: center; outline: none; font-size: 1.2rem; text-transform: uppercase; }
+        .captcha-input:focus { border-color: #7b61ff; }
 
         .btn-prep { width: 100%; padding: 20px; background: #7b61ff; color: white; border: none; border-radius: 20px; font-weight: bold; font-size: 1.2rem; cursor: pointer; box-shadow: 0 0 20px rgba(123, 97, 255, 0.3); transition: 0.3s; }
         .btn-prep:disabled { background: #222; color: #555; cursor: not-allowed; box-shadow: none; opacity: 0.5; }

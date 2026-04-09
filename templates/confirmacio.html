@@ -63,7 +63,7 @@
                     Confirmo que soc major d'edat (+18)
                 </label>
 
-                <div class="captcha-wrapper">
+                <div class="captcha-wrapper" id="zona-captcha" style="display: none;">
                     <span class="captcha-text" id="captcha-code">----</span>
                     <input type="text" id="captcha-input" class="captcha-input" placeholder="Codi" maxlength="4" oninput="validar()">
                 </div>
@@ -97,6 +97,16 @@
 
             if (esAlcoholic) {
                 const isChecked = document.getElementById('edat').checked;
+                const zonaCaptcha = document.getElementById('zona-captcha');
+                
+                // Mostrem el captcha només si ha marcat que és major d'edat
+                if (isChecked) {
+                    zonaCaptcha.style.display = 'flex';
+                } else {
+                    zonaCaptcha.style.display = 'none';
+                    document.getElementById('captcha-input').value = ''; // Buidem l'input si desmarca la casella
+                }
+
                 const inputVal = document.getElementById('captcha-input').value.toUpperCase();
                 btn.disabled = !(isChecked && inputVal === codiGenerated);
             } else {

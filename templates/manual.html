@@ -17,9 +17,8 @@
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; margin-top: 40px; }
         .card { background: #08080c; border-radius: 25px; border: 1px solid #222; overflow: hidden; text-decoration: none; color: white; transition: 0.4s; position: relative; display: block; height: 100%; }
         .card:hover:not(.bloquejada) { border-color: #7b61ff; transform: translateY(-5px); }
-        .card.bloquejada { opacity: 0.2; filter: grayscale(1); cursor: not-allowed; border-style: dotted; }
+        .card.bloquejada { opacity: 0.4; filter: grayscale(0.9); cursor: not-allowed; border-style: dotted; }
         .card-body { padding: 20px; }
-        .badge-estoc { position: absolute; top: 15px; right: 15px; background: #222; color: #555; padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; border: 1px solid #333; }
     </style>
 </head>
 <body>
@@ -46,9 +45,10 @@
             </a>
             {% else %}
             <div class="card bloquejada">
-                <span class="badge-estoc">SENSE INGREDIENTS</span>
-                <div style="height: 150px; display: flex; align-items: center; justify-content: center; font-size: 3.5rem;">🍹</div>
-                <div class="card-body"><h3>{{ coctel.Nom_Coctel }}</h3><p>No disponible.</p></div>
+                <div style="height: 150px; background: #0a0b16; display: flex; align-items: center; justify-content: center; font-size: 3.5rem;">🍹</div>
+                <div class="card-body">
+                    <h3>{{ coctel.Nom_Coctel }}</h3><p style="color:#555;">{{ coctel.Descripcio }}</p>
+                </div>
             </div>
             {% endif %}
         </div>

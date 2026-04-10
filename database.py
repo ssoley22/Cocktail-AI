@@ -94,24 +94,26 @@ def get_coctel(id):
 
 def get_coctels_disponibles():
     '''
-    Retorna una llista amb tots els còctels de la base de dades que es poden preparar
-    [{'ID_Coctel': , 'Nom_Coctel': , 'Descripcio': }, ...]
+    Retorna els còctels preparables amb les categories dels seus ingredients.
+    [{'ID_Coctel': , 'Nom_Coctel': , 'Descripcio': , 'Ingredients': 'Vodka,Llimona,...'}, ...]
     '''
     connexio = connectar()
-    llistat = connexio.execute("""SELECT c.ID_Coctel, c.Nom_Coctel, c.Descripcio
-                               FROM Coctels c
-                               WHERE NOT EXISTS (
-                                    SELECT 1 FROM Receptes r
-                                    WHERE r.ID_Coctel = c.ID_Coctel
-                                    AND r.Categoria
-                                    NOT IN (
-                                    SELECT i.Categoria
-                                    FROM Muntatge m
-                                    JOIN Ingredients i ON m.ID_Ingredient = i.ID_Ingredient
-                                    WHERE m.Capacitat_Actual_ml >= r.Quantitat_ml
-                                    )
-                               )
-                               """).fetchall()
+    llistat = connexio.execute("""
+        SELECT c.ID_Coctel, c.Nom_Coctel, c.Descripcio,
+               GROUP_CONCAT(DISTINCT r.Categoria) as Ingredients
+        FROM Coctels c
+        JOIN Receptes r ON r.ID_Coctel = c.ID_Coctel
+        WHERE NOT EXISTS (
+            SELECT 1 FROM Receptes r2
+            WHERE r2.ID_Coctel = c.ID_Coctel
+            AND r2.Categoria NOT IN (
+                SELECT i.Categoria FROM Muntatge m
+                JOIN Ingredients i ON m.ID_Ingredient = i.ID_Ingredient
+                WHERE m.Capacitat_Actual_ml >= r2.Quantitat_ml
+            )
+        )
+        GROUP BY c.ID_Coctel
+    """).fetchall()
     connexio.close()
     return [dict(fila) for fila in llistat]
 
@@ -171,5 +173,4 @@ def restar_estoc(id_coctel):
     connexio.commit()
     connexio.close()
     return True
-
 

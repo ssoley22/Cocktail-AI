@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import database
 import random
+import IA
 
 app = Flask(__name__)
 app.secret_key = 'clau_secreta_cocktail_2026'
@@ -67,7 +68,16 @@ def recomanacio(sentit):
     disponibles = database.get_coctels_disponibles()
     if not disponibles:
         return render_template('error.html', missatge="No hi ha estoc per a cap còctel.")
-    coctel = database.get_coctel(random.choice(disponibles)['ID_Coctel'])
+
+    resultat = IA.recomanar_per_emocio(sentit, disponibles)
+
+    if resultat is None:
+        # Fallback: si la IA falla, triem a l'atzar
+        coctel = database.get_coctel(random.choice(disponibles)['ID_Coctel'])
+    else:
+        coctel = database.get_coctel(resultat['id_coctel'])
+        coctel['frase_barman'] = resultat['frase_barman']
+
     return render_template('confirmacio.html', coctel=coctel, disponible=True, origen='/emocions')
 
 

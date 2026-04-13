@@ -67,6 +67,34 @@ def crida_ia_redundant(sys_prompt: str, user_prompt: str) -> dict | None:
             print(f"[IA FATAL ERROR] Han fallat els dos proveïdors. Error final: {e_or}")
             return None
 
+def crida_ia_redundant_historial(sys_prompt: str, historial: list) -> dict | None:
+    """Variant del motor que accepta l'historial sencer de la conversa."""
+    missatges_full = [{"role": "system", "content": sys_prompt}] + historial
+    
+    try:
+        # Intent 1: Groq
+        resposta = client_groq.chat.completions.create(
+            model=MODEL_IA,
+            messages=missatges_full,
+            response_format={"type": "json_object"},
+        )
+        return json.loads(resposta.choices[0].message.content.strip())
+    
+    except Exception as e:
+        print(f"[IA WARNING] Error historial Groq: {e}. Provant OpenRouter...")
+        try:
+            # Intent 2: OpenRouter
+            resposta = client_or.chat.completions.create(
+                model=MODEL_IA,
+                messages=missatges_full,
+                response_format={"type": "json_object"},
+                temperature=0.8
+            )
+            return json.loads(resposta.choices[0].message.content.strip())
+        except Exception as e_or:
+            print(f"[IA FATAL] Error total xat: {e_or}")
+            return None
+        
 
 # ==========================================
 # 3. MÒDUL D'EMOCIONS
@@ -110,3 +138,39 @@ Retorna NOMÉS un JSON pur amb aquest format exacte:
             return dades
             
     return None
+
+
+# ==========================================
+# 4. MÒDUL DE XAT CREATIU (Amb Memòria i Context)
+# ==========================================
+def xat_creatiu_amb_memoria(historial_missatges: list, carrils_actius: str) -> dict | None:
+    """
+    Gestiona una conversa de fins a 3 missatges. 
+    Decideix si ha de xerrar o si ja té prou info per inventar la recepta.
+    """
+    if not carrils_actius:
+        return None
+
+    # PROMPT DE SISTEMA: Aquí definim la personalitat i el format de sortida
+    sys_prompt = f"""Ets un barman creatiu en un xat en directe.
+LÍQUIDS DISPONIBLES ALS CARRILS: {carrils_actius}.
+
+LES TEVES REGLES:
+1. Si el client encara no ha donat prou detalls, xerra amb ell i pregunta-li coses per definir el seu gust.
+2. Si ja saps què li aniria bé, INVENTA un còctel original amb els líquids disponibles.
+3. REGLES DE MIXOLOGIA (Molt Important): 
+    - No facis barreges boges. Fes servir MÀXIM 4 ingredients en total. 
+    - Fes servir MÀXIM 1 o 2 alcohols forts diferents (Vodka, Rom, Ginebra) per beguda. 
+    - La quantitat TOTAL d'alcohol fort no hauria de superar els 70ml per motius de proporció i cost. La resta han de ser sucs o refrescos.
+4. No tradueixis lliurement els noms dels ingredients, agafa els de la llista dels carrils com a referència.
+5. El format de sortida ha de ser SEMPRE un JSON amb aquests camps:
+   - "resposta_text": La teva resposta amable o explicació en català.
+   - "tinc_recepta": true/false (només true si en aquest missatge ja proposes la beguda final).
+   - "dades_coctel": {{"nom": "Nom", "recepta": {{"Líquid": ml}}}} (només si tinc_recepta és true).
+
+
+IMPORTANT: Si proposes una recepta, la suma total de ml ha de ser EXACTAMENT 200."""
+
+    # En lloc de passar un sol 'user_prompt', passem tot l'historial a la nostra funció redundant
+    # Per fer-ho, modificarem lleugerament la crida_ia_redundant més avall.
+    return crida_ia_redundant_historial(sys_prompt, historial_missatges)

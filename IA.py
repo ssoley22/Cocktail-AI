@@ -88,7 +88,6 @@ def crida_ia_redundant_historial(sys_prompt: str, historial: list) -> dict | Non
                 model=MODEL_IA,
                 messages=missatges_full,
                 response_format={"type": "json_object"},
-                temperature=0.8
             )
             return json.loads(resposta.choices[0].message.content.strip())
         except Exception as e_or:

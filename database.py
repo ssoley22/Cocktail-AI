@@ -42,17 +42,18 @@ def get_ingredients():
 def get_muntatge():
     '''
     Retorna l'estat de les 6 posicions del carril
-    [{'Posicio': ,'ID_Ingredient': ,'Nom_Liquid': ,'Categoria': ,'Capacitat_Actual_ml': }, ...]
+    [{'Posicio': , 'ID_Ingredient': , 'Nom_Liquid': , 'Categoria': , 'Te_Alcohol': , 'Capacitat_Actual_ml': }, ...]
     '''
     connexio = connectar()
     llistat = connexio.execute("""
-                                SELECT m.Posicio, m.ID_Ingredient, i.Nom_Liquid, i.Categoria, m.Capacitat_Actual_ml
+                                SELECT m.Posicio, m.ID_Ingredient, i.Nom_Liquid, i.Categoria, i.Te_Alcohol, m.Capacitat_Actual_ml
                                 FROM Muntatge m
                                 JOIN Ingredients i ON m.ID_Ingredient = i.ID_Ingredient
                                 ORDER BY m.Posicio
     """).fetchall()
     connexio.close()
     return [dict(fila) for fila in llistat]
+
 
 
 def get_coctel(id):

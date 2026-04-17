@@ -6,6 +6,7 @@ import IA
 app = Flask(__name__)
 app.secret_key = 'clau_secreta_cocktail_2026'
 
+# Credencials del panell d'administració (hardcoded per simplicitat)
 USER_ADMIN = "admin"
 PASS_ADMIN = "1234"
 
@@ -19,6 +20,7 @@ def inici():
 
 @app.route('/manual')
 def manual():
+    # Agafa tots els coctels i marca quins es poden preparar ara
     tots = database.get_tots_els_coctels()
     disponibles = database.get_coctels_disponibles()
     ids_disponibles = [c['ID_Coctel'] for c in disponibles]
@@ -29,6 +31,7 @@ def manual():
 
 @app.route('/aleatori')
 def aleatori():
+    # Tria un còctel a l'atzar d'entre els que es poden fer ara
     disponibles = database.get_coctels_disponibles()
     if not disponibles:
         return render_template('error.html', missatge="No hi ha estoc per a cap còctel.")
@@ -38,6 +41,8 @@ def aleatori():
 
 @app.route('/confirmacio/<int:id_coctel>')
 def confirmacio(id_coctel):
+    # Mostra la pàgina de confirmació d'un còctel de la BD.
+    # El paràmetre 'origen' permet que el botò "tornar" vagi al lloc correcte.
     dades = database.get_coctel(id_coctel)
     if not dades:
         return redirect(url_for('manual'))
@@ -50,6 +55,11 @@ def confirmacio(id_coctel):
 
 @app.route('/confirmacio_ia')
 def confirmacio_ia():
+    """
+    Pàgina de confirmació per a còctels inventats pel xat de la IA.
+    La recepta no vé de la BD. Utilitzem ID_Coctel=999 com a identificador especial.
+    Calcula si el còctel és alcoholic mirant el camp Te_Alcohol del muntatge.
+    """
     coctel_ia = session.get('coctel_ia')
     if not coctel_ia:
         return redirect(url_for('xat'))
@@ -77,21 +87,25 @@ def confirmacio_ia():
 
 @app.route('/preparar/<int:id_coctel>', methods=['POST'])
 def preparar(id_coctel):
-    # CAS ESPECIAL: Còctel de la IA
+    # Gestiona la preparació d'un còctel i resta l'estoc
+
+    # CAS ESPECIAL: Còctel inventat per la IA
     if id_coctel == 999:
         coctel_ia = session.get('coctel_ia')
-        if not coctel_ia: return redirect(url_for('xat'))
+        if not coctel_ia: 
+            return redirect(url_for('xat'))
         
         recepta = coctel_ia['recepta']
+        # Construïm un diccionari {Nom_Liquid: dades_carril} per accedir ràpid per nom
         muntatge = {m["Nom_Liquid"]: m for m in database.get_muntatge() if m["Nom_Liquid"]}
         
-        # 1. Comprovació d'estoc i protecció contra KeyError
+        # 1. Comprovació d'estoc: si falta algun ingredient, mostrem error sense modificar res
         for liquid, ml in recepta.items():
             carril = muntatge.get(liquid)
             if not carril or carril["Capacitat_Actual_ml"] < ml:
                 return render_template('error.html', missatge=f"Ens hem quedat sense prou '{liquid}' per fer aquesta creació.")
         
-        # 2. Restar estoc amb protecció BBDD (try/except/finally)
+        # 2. Restar estoc amb protecció BD (try/except/finally)
         connexio = database.connectar()
         try:
             for liquid, ml in recepta.items():
@@ -103,8 +117,9 @@ def preparar(id_coctel):
             connexio.rollback()
             return render_template('error.html', missatge="Error intern al restar l'estoc.")
         finally:
-            connexio.close() # <-- Això garanteix que no es quedi penjada la DB
+            connexio.close()  # Sempre tanquem la connexió
         
+        # Netegem la sessió un cop preparat el còctel
         session.pop('historial', None)
         session.pop('coctel_ia', None)
         return render_template('preparant.html', coctel={"Nom_Coctel": coctel_ia['nom']})
@@ -126,6 +141,10 @@ def emocions():
 
 @app.route('/recomanacio/<sentit>')
 def recomanacio(sentit):
+    """
+    Crida a la IA per triar el còctel més adequat per l'emoció.
+    Si la IA falla (cap dels dos proveidors respon), tria un a l'atzar.
+    """
     disponibles = database.get_coctels_disponibles()
     if not disponibles:
         return render_template('error.html', missatge="No hi ha estoc per a cap còctel.")
@@ -133,7 +152,7 @@ def recomanacio(sentit):
     resultat = IA.recomanar_per_emocio(sentit, disponibles)
 
     if resultat is None:
-        # Fallback: si la IA falla, triem a l'atzar
+        # Fallback: si la IA falla, triem a l'atzar per no deixar l'usuari sense resposta
         coctel = database.get_coctel(random.choice(disponibles)['ID_Coctel'])
     else:
         coctel = database.get_coctel(resultat['id_coctel'])
@@ -153,8 +172,15 @@ def xat():
     restants = 3 - torns_fets
     return render_template('xat.html', restants=restants)
 
+
 @app.route('/api/generar_xat', methods=['POST'])
 def generar_xat():
+    """
+    Endpoint del xat creatiu. Rep el missatge de l'usuari, el guarda a la sessió, crida a la 
+    IA amb tot l'historial i retorna la resposta en format JSON.
+    Quan la IA proposa una recepta la guarda a session['coctel_ia'] per la confirmació.
+    Límit de 3 torns (per evitar malgast de tokens)
+    """
     if 'historial' not in session:
         session['historial'] = []
         
@@ -164,19 +190,19 @@ def generar_xat():
     dades_web = request.json
     missatge_usuari = dades_web.get('missatge', '')
 
-    # 1. Guardem el que diu l'usuari
+    # Guardem el missatge de l'usuari a l'historial
     session['historial'].append({"role": "user", "content": missatge_usuari})
     session.modified = True 
 
-    # 2. Agafem líquids reals per a l'IA
+    # gafem líquids reals per passar-los a la IA
     muntatge = database.get_muntatge()
     carrils_actius = ", ".join([m['Nom_Liquid'] for m in muntatge if m['Nom_Liquid']])
 
-    # 3. Cridem a l'IA (IA.py)
+    # Cridem a l'IA (IA.py) amb tot l'historial
     resultat = IA.xat_creatiu_amb_memoria(session['historial'], carrils_actius)
 
     if resultat:
-        # 4. Guardem la resposta de l'IA
+        # Guardem la resposta de l'IA a l'historial
         session['historial'].append({"role": "assistant", "content": resultat['resposta_text']})
         
         # Si hi ha recepta, la guardem a la sessió per a la confirmació
@@ -199,6 +225,7 @@ def generar_xat():
 
 @app.route('/reiniciar_xat')
 def reiniciar_xat():
+    # Netegem la sessió del xat per poder començar una conversa nova
     session.pop('historial', None)
     session.pop('coctel_ia', None)
     return redirect(url_for('xat'))
@@ -208,6 +235,7 @@ def reiniciar_xat():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # Si no estàs logat, et redirigeix al login
     error = None
     if request.method == 'POST':
         if request.form['username'] == USER_ADMIN and request.form['password'] == PASS_ADMIN:
@@ -248,3 +276,4 @@ if __name__ == "__main__":
     Només funciona si l'executes per terminal:  python app.py
     '''
     app.run(debug=True, port=5000)
+

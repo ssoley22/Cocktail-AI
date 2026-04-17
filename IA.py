@@ -9,21 +9,21 @@ from dotenv import load_dotenv
 # ==========================================
 load_dotenv()
 
-# PLA A: Connexió Directa a Groq (prioritat: velocitat)
+# PLA A: Connexió Directa a Groq (molt més ràpid)
 client_groq = OpenAI(
     base_url="https://api.groq.com/openai/v1",
     api_key=os.getenv("GROQ_API_KEY"),
     timeout=15.0
 )
 
-# PLA B: Connexió via OpenRouter
+# PLA B: Connexió via OpenRouter (fallback)
 client_or = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=os.getenv("OPENROUTER_API_KEY"),
     timeout=15.0
 )
 
-# El model que farem servir per a tota l'aplicació
+# Model únic per a tota l'aplicació: 120B paràmetres, 5.1B actius per inferència (MoE)
 MODEL_IA = "openai/gpt-oss-120b"
 
 
@@ -33,7 +33,8 @@ MODEL_IA = "openai/gpt-oss-120b"
 def crida_ia_redundant(sys_prompt: str, user_prompt: str) -> dict | None:
     """
     Motor central que gestiona la comunicació amb la IA.
-    Si Groq falla, salta automàticament a OpenRouter.
+    Intenta groq primer. Si falla per qualsevol motiu, salta automàticament a OpenRouter
+    sense que l'usuari noti res.
     """
     missatges = [
         {"role": "system", "content": sys_prompt},
@@ -45,7 +46,7 @@ def crida_ia_redundant(sys_prompt: str, user_prompt: str) -> dict | None:
         resposta = client_groq.chat.completions.create(
             model=MODEL_IA,
             messages=missatges,
-            response_format={"type": "json_object"}
+            response_format={"type": "json_object"}  # Força JSON pur, sense text
         )
         net = resposta.choices[0].message.content.replace('```json', '').replace('```', '').strip()
         return json.loads(net)
@@ -68,7 +69,13 @@ def crida_ia_redundant(sys_prompt: str, user_prompt: str) -> dict | None:
             return None
 
 def crida_ia_redundant_historial(sys_prompt: str, historial: list) -> dict | None:
-    """Variant del motor que accepta l'historial sencer de la conversa."""
+    """
+    Variant del motor per al xat creatiu: accepta l'historial sencer de la conversa en lloc
+    d'un sol missatge. L'historial és una llista de diccionaris {role, content} que inclou els 
+    torns anteriors de l'usuari i la IA.
+    """
+
+    # Afegim el system prompt al principi de l'historial
     missatges_full = [{"role": "system", "content": sys_prompt}] + historial
     
     try:
@@ -100,13 +107,14 @@ def crida_ia_redundant_historial(sys_prompt: str, historial: list) -> dict | Non
 # ==========================================
 def recomanar_per_emocio(emocio: str, coctels_disponibles: list) -> dict | None:
     """
-    Filtra la llista de còctels disponibles i demana a la IA que en triï un
-    basant-se en els sabors que millor acompanyin l'emoció del client.
+    Donada una emoció i la llista de còctels amb estoc, demana a la IA que triï el més adequat
+    d'entre la llista de còctels disponibles basant-se en els ingredients (no en el nom).
+    Retorna {'id_coctel': int, 'frase_barman': str} o None si falla.
     """
     if not coctels_disponibles:
         return None
     
-    # Desordenem la llista perquè la IA no tingui biaixos de posició
+    # Desordenem la llista per evitar que la IA triï sempre els primers elements
     coctels_shuffled = random.sample(coctels_disponibles, len(coctels_disponibles))
     
     text_carta = "\n".join(
@@ -130,6 +138,7 @@ Retorna NOMÉS un JSON pur amb aquest format exacte:
     dades = crida_ia_redundant(sys_prompt, user_prompt)
     
     if dades:
+        # Valida que l'ID que retorna la IA existeixi en la llista realment
         ids_valids = {c['ID_Coctel'] for c in coctels_disponibles}
         id_retornat = dades.get('id_coctel')
         
@@ -144,8 +153,9 @@ Retorna NOMÉS un JSON pur amb aquest format exacte:
 # ==========================================
 def xat_creatiu_amb_memoria(historial_missatges: list, carrils_actius: str) -> dict | None:
     """
-    Gestiona una conversa de fins a 3 missatges. 
-    Decideix si ha de xerrar o si ja té prou info per inventar la recepta.
+    Gestiona el xat creatiu amb memòria de fins a 3 torns de conversa. 
+    Rep l'historial complet de la sessió i els líquids disponibles als carrils.
+    La IA decideix si ha de xerrar (necessita més informació) o si ja pot proposar una recepta.
     """
     if not carrils_actius:
         return None
@@ -170,6 +180,6 @@ LES TEVES REGLES:
 
 IMPORTANT: Si proposes una recepta, la suma total de ml ha de ser EXACTAMENT 200."""
 
-    # En lloc de passar un sol 'user_prompt', passem tot l'historial a la nostra funció redundant
-    # Per fer-ho, modificarem lleugerament la crida_ia_redundant més avall.
+    # En lloc de passar un sol 'user_prompt', passem tot l'historial perquè tingui més context
     return crida_ia_redundant_historial(sys_prompt, historial_missatges)
+

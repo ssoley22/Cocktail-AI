@@ -41,7 +41,8 @@ def get_ingredients():
 
 def get_muntatge():
     '''
-    Retorna l'estat de les 6 posicions del carril
+    Retorna l'estat actual de les 6 posicions del carril
+    * Fa un JOIN amb Ingredients per obtenir el nom, categoria i si té alcohol
     [{'Posicio': , 'ID_Ingredient': , 'Nom_Liquid': , 'Categoria': , 'Te_Alcohol': , 'Capacitat_Actual_ml': }, ...]
     '''
     connexio = connectar()
@@ -58,7 +59,7 @@ def get_muntatge():
 
 def get_coctel(id):
     '''
-    Retorna un còctel concret amb els seus ingredients
+    Retorna un còctel concret amb els seus ingredients, retorna None si no existeix
     {'ID_Coctel': ,'Nom_Coctel': ,'Descripcio': ,'Alcoholic': ,'Recepta': [{'Posicio': ,'Nom_Liquid': ,'Quantitat_ml': ,'Ordre': },...]}
     '''
     connexio = connectar()
@@ -95,7 +96,7 @@ def get_coctel(id):
 
 def get_coctels_disponibles():
     '''
-    Retorna els còctels preparables amb les categories dels seus ingredients.
+    Retorna els còctels preparables amb l'estoc actual del carril i les categories dels seus ingredients.
     [{'ID_Coctel': , 'Nom_Coctel': , 'Descripcio': , 'Ingredients': 'Vodka,Llimona,...'}, ...]
     '''
     connexio = connectar()

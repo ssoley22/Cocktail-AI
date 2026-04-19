@@ -4,139 +4,24 @@
     <meta charset="UTF-8">
     <title>Xat IA - Cocktail IA</title>
     <style>
-        /* ESTIL ORIGINAL EXACTE */
-        body { 
-            background-color: #05050a; 
-            color: white; 
-            font-family: 'Segoe UI', sans-serif; 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
-        }
+        body { background-color: #05050a; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
         
-        .btn-back { 
-            position: fixed; top: 25px; left: 25px; 
-            color: #888; text-decoration: none; font-weight: bold; 
-            border: 1px solid #333; padding: 10px 15px; border-radius: 12px; 
-            background: rgba(18, 20, 33, 0.8); transition: 0.3s; z-index: 100; 
-        }
+        .btn-back { position: fixed; top: 25px; left: 25px; color: #888; text-decoration: none; font-weight: bold; border: 1px solid #333; padding: 10px 15px; border-radius: 12px; background: rgba(18, 20, 33, 0.8); transition: 0.3s; z-index: 100; }
         .btn-back:hover { color: #7b61ff; border-color: #7b61ff; transform: translateX(-5px); }
 
-        /* Contenidor central flotant */
-        .chat-container { 
-            width: 90%; 
-            max-width: 600px; 
-            height: 85vh; 
-            display: flex; 
-            flex-direction: column; 
-        }
-        
-        h1 { font-size: 2rem; color: #7b61ff; text-align: center; margin-bottom: 20px; flex-shrink: 0; }
+        .chat-container { width: 90%; max-width: 600px; display: flex; flex-direction: column; gap: 20px; }
+        h1 { font-size: 2rem; color: #7b61ff; text-align: center; margin-bottom: 30px; }
 
-        /* Zona de missatges */
-        #chat-box { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; 
-            overflow-y: auto; 
-            padding-right: 5px;
-            margin-bottom: 20px;
-        }
-        #chat-box::-webkit-scrollbar { width: 4px; }
-        #chat-box::-webkit-scrollbar-thumb { background: #1a1d33; border-radius: 10px; }
-
-        /* Bombolles de xat */
         .bubble { padding: 20px; border-radius: 25px; max-width: 80%; line-height: 1.5; position: relative; }
-        .user-bubble { background: #1a1d33; align-self: flex-end; border-bottom-right-radius: 5px; border: 1px solid #333; word-break: break-word; }
+        .user-bubble { background: #1a1d33; align-self: flex-end; border-bottom-right-radius: 5px; border: 1px solid #333; }
         .ai-bubble { background: #121421; align-self: flex-start; border-bottom-left-radius: 5px; border: 1px solid #7b61ff; }
 
-        /* Targeta de còctel generada al xat (MOLT MILLORADA) */
-        .coctel-card {
-            background: linear-gradient(145deg, #121421, #0a0b16);
-            border: 1px solid #7b61ff;
-            box-shadow: 0 10px 25px rgba(123, 97, 255, 0.15);
-            border-radius: 20px;
-            padding: 25px; 
-            margin-top: 10px; 
-            text-align: center; 
-            animation: fadeIn 0.5s forwards;
-            align-self: center; /* La centrem perquè quedi com un resultat final */
-            width: 90%;
-        }
-        .coctel-card h3 { font-size: 1.5rem; color: #7b61ff; margin: 0 0 5px 0; }
-        .coctel-desc { font-size: 0.9rem; color: #aaa; margin-bottom: 20px; font-style: italic; }
-        
-        .ingredients-grid {
-            display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 20px;
-        }
-        .ingredient-tag {
-            display: inline-flex; align-items: center; background: rgba(123, 97, 255, 0.1); 
-            color: #eee; padding: 8px 15px; border-radius: 12px; font-size: 0.9rem; 
-            border: 1px solid rgba(123, 97, 255, 0.3);
-        }
-        .ingredient-tag strong { color: #7b61ff; margin-left: 5px; font-size: 1rem; }
-        
-        .btn-confirmar-ia {
-            display: inline-block; width: 80%; background: #7b61ff; color: white; 
-            padding: 15px; border-radius: 15px; text-decoration: none; font-weight: bold;
-            transition: 0.3s;
-        }
-        .btn-confirmar-ia:hover { background: #8e77ff; transform: scale(1.02); }
+        .input-group { display: flex; gap: 10px; margin-top: 30px; background: #121421; padding: 10px; border-radius: 35px; border: 1px solid #333; }
+        .input-group input { flex: 1; background: transparent; border: none; color: white; padding: 10px 20px; outline: none; font-size: 1rem; }
+        .btn-send { background: #7b61ff; border: none; color: white; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .btn-send:hover { transform: scale(1.1); background: #8e77ff; }
 
-        /* Comptador discret sota la bombolla */
-        .msg-counter {
-            font-size: 0.8rem; color: #666; margin: -10px 0 5px 20px; align-self: flex-start; font-weight: bold; animation: fadeIn 0.5s forwards;
-        }
-
-        /* Contenidor inferior d'input i botons de reinici */
-        .input-container { flex-shrink: 0; width: 100%; }
-
-        /* Camp d'entrada auto-expandible */
-        .input-group { 
-            display: flex; gap: 10px; background: #121421; padding: 10px; 
-            border-radius: 35px; border: 1px solid #333; align-items: flex-end;
-        }
-        .input-group textarea { 
-            flex: 1; background: transparent; border: none; color: white; 
-            padding: 10px 20px; outline: none; font-size: 1rem; font-family: inherit;
-            resize: none; overflow-y: auto; line-height: 24px;
-            height: 24px; 
-            max-height: 96px; 
-            box-sizing: content-box;
-        }
-        .input-group textarea::-webkit-scrollbar { width: 4px; }
-        .input-group textarea::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-
-        .btn-send { 
-            background: #7b61ff; border: none; color: white; 
-            width: 45px; height: 45px; border-radius: 50%; 
-            cursor: pointer; transition: 0.3s; display: flex; 
-            align-items: center; justify-content: center; font-size: 1.2rem;
-            margin-bottom: 2px; 
-        }
-        .btn-send:hover:not(:disabled) { transform: scale(1.1); background: #8e77ff; }
-        
-        /* El nou botó complet de Reiniciar */
-        .btn-reset-full { 
-            display: none; width: 100%; background: #f44336; color: white; 
-            border: none; padding: 15px; border-radius: 35px; 
-            font-size: 1.1rem; font-weight: bold; cursor: pointer; 
-            transition: 0.3s; text-align: center; text-decoration: none;
-            box-sizing: border-box; letter-spacing: 1px;
-        }
-        .btn-reset-full:hover { background: #d32f2f; }
-
-        /* Animació punts */
-        .typing { display: flex; gap: 5px; padding: 5px; }
-        .dot { width: 8px; height: 8px; background: #7b61ff; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
-        .dot:nth-child(2) { animation-delay: 0.2s; }
-        .dot:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .btn-preparar-ia { display: none; margin-top: 20px; background: #7b61ff; color: white; text-align: center; padding: 15px; border-radius: 20px; text-decoration: none; font-weight: bold; box-shadow: 0 0 15px rgba(123, 97, 255, 0.4); }
     </style>
 </head>
 <body>
@@ -145,151 +30,64 @@
 
     <div class="chat-container">
         <h1>Explica'm què vols... 🤖</h1>
-
-        <div id="chat-box">
-            <div class="bubble ai-bubble">
-                Hola! Soc la teva Cocktail IA. Digue'm com ha anat el dia o quins sabors t'agraden i et prepararé una recepta única.
-            </div>
+        
+        <div class="bubble ai-bubble">
+            Hola! Soc la teva Cocktail IA. Digue'm com ha anat el dia o quins sabors t'agraden i et prepararé una recepta única.
         </div>
 
-        <div class="input-container">
-            <div class="input-group" id="input-group">
-                <textarea id="user-input" rows="1" placeholder="Ex: Vull algo refrescant amb llimona..."></textarea>
-                <button class="btn-send" id="send-btn" onclick="enviarMissatge()">➔</button>
-            </div>
-            <button class="btn-reset-full" id="btn-reset-full" onclick="window.location.href='/reiniciar_xat'">REINICIAR XAT</button>
+        <div id="chat-box" style="display: flex; flex-direction: column; gap: 15px;"></div>
+
+        <a href="#" id="btn-resultat" class="btn-preparar-ia">PREPARAR PROPOSTA 🍹</a>
+
+        <div class="input-group">
+            <input type="text" id="user-input" placeholder="Ex: Vull algo refrescant amb llimona...">
+            <button class="btn-send" onclick="enviarMissatge()">➔</button>
         </div>
     </div>
 
     <script>
-        const chatBox = document.getElementById('chat-box');
-        const userInput = document.getElementById('user-input');
-        const inputGroup = document.getElementById('input-group');
-        const btnResetFull = document.getElementById('btn-reset-full');
-        let restants = {{ restants | default(3) }};
-        // 1. Auto-expandir el textarea fins a 4 línies i fer scroll
-        userInput.addEventListener('input', function() {
-            this.style.height = '24px'; 
-            this.style.height = Math.min(this.scrollHeight, 96) + 'px'; 
-        });
-
-        // 2. Controlar l'Enter vs Shift+Enter
-        userInput.addEventListener('keydown', (e) => { 
-            if(e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault(); 
-                enviarMissatge(); 
-            }
-        });
-
-        // 3. Comprovem si venim d'una pàgina amb el límit esgotat
-        window.onload = function() {
-            if (restants <= 0) activarModeReinici();
-        }
-
-        // 4. Activar la barra de Reiniciar (Substitueix totalment l'input group)
-        function activarModeReinici() {
-            inputGroup.style.display = 'none';
-            btnResetFull.style.display = 'block';
-        }
-
         async function enviarMissatge() {
-            const text = userInput.value.trim();
-            if (!text) return;
+            const input = document.getElementById('user-input');
+            const chatBox = document.getElementById('chat-box');
+            const btnResultat = document.getElementById('btn-resultat');
 
-            // Mostrar bombolla usuari
-            userInput.value = "";
-            userInput.style.height = '24px'; 
-            appendBubble('user-bubble', text);
-            
-            // Animació IA pensant
-            const typingId = "typing-" + Date.now();
-            const typingBubble = document.createElement('div');
-            typingBubble.className = "bubble ai-bubble";
-            typingBubble.id = typingId;
-            typingBubble.innerHTML = '<div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
-            chatBox.appendChild(typingBubble);
-            scrollDown();
+            if (input.value.trim() === "") return;
 
+            // 1. Afegir bombolla usuari
+            const userDiv = document.createElement('div');
+            userDiv.className = 'bubble user-bubble';
+            userDiv.innerText = input.value;
+            chatBox.appendChild(userDiv);
+
+            const missatge = input.value;
+            input.value = "";
+
+            // 2. Comunicació amb el backend (Flask)
             try {
-                const res = await fetch('/api/generar_xat', {
+                const response = await fetch('/api/generar_xat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ missatge: text })
+                    body: JSON.stringify({ missatge: missatge })
                 });
-                
-                const data = await res.json();
-                chatBox.removeChild(typingBubble);
 
-                if (data.status === "ok") {
-                    appendBubble('ai-bubble', data.resposta);
-                    
-                    // Si la IA envia una recepta, mostrem la targeta nova
-                    if (data.tinc_recepta && data.dades_coctel) {
-                        appendCoctelCard(data.dades_coctel);
+                const data = await response.json();
+
+                // 3. Afegir bombolla IA
+                if (data.status === 'ok') {
+                    const aiDiv = document.createElement('div');
+                    aiDiv.className = 'bubble ai-bubble';
+                    aiDiv.innerText = data.resposta;
+                    chatBox.appendChild(aiDiv);
+
+                    // 4. Si la IA ens dona recepta, activem el botó de preparar
+                    if (data.tinc_recepta) {
+                        btnResultat.style.display = 'block';
+                        btnResultat.href = "/confirmacio_ia"; 
                     }
-                    
-                    // Actualitzem missatges i mirem si hem de tancar (AQUESTA ÉS LA LÒGICA QUE HO BLINDA)
-                    restants = data.restants;
-                    if (restants > 0) {
-                        const textAjuda = data.tinc_recepta ? 
-                            `💬 Et queden ${restants} missatges si vols modificar la recepta.` : 
-                            `💬 Et queden ${restants} missatges`;
-                        appendCounterText(textAjuda);
-                    } else {
-                        activarModeReinici();
-                    }
-
-                } else {
-                    appendBubble('ai-bubble', "He tingut un problema amb la meva memòria. Prova de reiniciar.");
-                    activarModeReinici();
                 }
-            } catch (e) {
-                chatBox.removeChild(typingBubble);
-                appendBubble('ai-bubble', "Error de connexió. Revisa la xarxa.");
+            } catch (error) {
+                console.error("Error al xat:", error);
             }
-        }
-
-        function appendBubble(cls, txt) {
-            const div = document.createElement('div');
-            div.className = "bubble " + cls;
-            div.innerText = txt; 
-            chatBox.appendChild(div);
-            scrollDown();
-        }
-
-        function appendCounterText(txt) {
-            const div = document.createElement('div');
-            div.className = "msg-counter";
-            div.innerText = txt;
-            chatBox.appendChild(div);
-            scrollDown();
-        }
-
-        function appendCoctelCard(dades) {
-            const card = document.createElement('div');
-            card.className = "coctel-card";
-            
-            // Creem la graella visual dels ingredients
-            let ingredientsHTML = '<div class="ingredients-grid">';
-            if (dades.recepta) {
-                for (const [liquid, ml] of Object.entries(dades.recepta)) {
-                    ingredientsHTML += `<span class="ingredient-tag">${liquid}: <strong>${ml}ml</strong></span>`;
-                }
-            }
-            ingredientsHTML += '</div>';
-
-            card.innerHTML = `
-                <h3>🍹 ${dades.nom}</h3>
-                <p class="coctel-desc">Fórmula perfecta de 200ml generada en temps real.</p>
-                ${ingredientsHTML}
-                <a href="/confirmacio_ia" class="btn-confirmar-ia">PREPARAR AQUESTA RECEPTA ✅</a>
-            `;
-            chatBox.appendChild(card);
-            scrollDown();
-        }
-
-        function scrollDown() {
-            chatBox.scrollTop = chatBox.scrollHeight;
         }
     </script>
 </body>

@@ -11,14 +11,15 @@
         h1 { color: #7b61ff; font-size: 2.5rem; margin-bottom: 20px; }
         .controls { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; align-items: center; }
         .search-bar { width: 100%; padding: 15px 25px; border-radius: 30px; border: 1px solid #333; background: #121421; color: white; outline: none; }
-        .filtres { display: flex; gap: 10px; }
+        .filtres { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
         .btn-filtre { background: #121421; border: 1px solid #444; color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; transition: 0.3s; }
         .btn-filtre.active { background: #7b61ff; border-color: #7b61ff; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; margin-top: 40px; }
         .card { background: #08080c; border-radius: 25px; border: 1px solid #222; overflow: hidden; text-decoration: none; color: white; transition: 0.4s; position: relative; display: block; height: 100%; }
         .card:hover:not(.bloquejada) { border-color: #7b61ff; transform: translateY(-5px); }
-        .card.bloquejada { opacity: 0.4; filter: grayscale(0.9); cursor: not-allowed; border-style: dotted; }
+        .card.bloquejada { opacity: 0.2; filter: grayscale(1); cursor: not-allowed; border-style: dotted; }
         .card-body { padding: 20px; }
+        .badge-estoc { position: absolute; top: 15px; right: 15px; background: #222; color: #555; padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; border: 1px solid #333; }
     </style>
 </head>
 <body>
@@ -31,18 +32,17 @@
                 <button class="btn-filtre active" onclick="filtrar('tots', this)">Tots</button>
                 <button class="btn-filtre" onclick="filtrar('amb', this)">Amb Alcohol</button>
                 <button class="btn-filtre" onclick="filtrar('sense', this)">Sense Alcohol</button>
-                <button id="btn-disponibles" class="btn-filtre" style="margin-left: 30px; border-color: #7b61ff; color: #7b61ff; display: flex; align-items: center; gap: 8px;" onclick="toggleDisponibles(this)">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                    </svg>
-                    Filtrar Disponibles
-                </button>
+                <button class="btn-filtre" onclick="filtrar('disponibles', this)">Disponibles</button>
             </div>
         </div>
     </div>
     <div class="grid">
         {% for coctel in coctels %}
-        <div class="card-item" data-nom="{{ coctel.Nom_Coctel | lower }}" data-alcohol="{{ 'amb' if coctel.Alcoholic == 1 else 'sense' }}">
+        <div class="card-item" 
+             data-nom="{{ coctel.Nom_Coctel | lower }}" 
+             data-alcohol="{{ 'amb' if coctel.Alcoholic == 1 else 'sense' }}"
+             data-disponible="{{ 'si' if coctel.disponible else 'no' }}">
+             
             {% if coctel.disponible %}
             <a href="/confirmacio/{{ coctel.ID_Coctel }}" class="card">
                 <div style="height: 150px; background: #0a0b16; display: flex; align-items: center; justify-content: center; font-size: 3.5rem;">🍹</div>
@@ -50,55 +50,41 @@
             </a>
             {% else %}
             <div class="card bloquejada">
-                <div style="height: 150px; background: #0a0b16; display: flex; align-items: center; justify-content: center; font-size: 3.5rem;">🍹</div>
-                <div class="card-body">
-                    <h3>{{ coctel.Nom_Coctel }}</h3><p style="color:#555;">{{ coctel.Descripcio }}</p>
-                </div>
+                <span class="badge-estoc">SENSE INGREDIENTS</span>
+                <div style="height: 150px; display: flex; align-items: center; justify-content: center; font-size: 3.5rem;">🍹</div>
+                <div class="card-body"><h3>{{ coctel.Nom_Coctel }}</h3><p>No disponible.</p></div>
             </div>
             {% endif %}
         </div>
         {% endfor %}
     </div>
     <script>
-        // Variable global per saber si estem amagant els bloquejats
-        window.nomesDisponibles = false;
-
+        window.filtreTipus = 'tots'; // Per defecte
+        
         function aplicarFiltres() {
             const text = document.getElementById('cercador').value.toLowerCase();
             document.querySelectorAll('.card-item').forEach(card => {
                 const matchText = card.dataset.nom.includes(text);
-                const matchAlc = (window.filtre === 'tots' || !window.filtre || card.dataset.alcohol === window.filtre);
+                let matchAlc = true;
                 
-                // Mirem si la targeta té la classe 'bloquejada' dins seu
-                const estaBloquejada = card.querySelector('.card').classList.contains('bloquejada');
-                const matchDisponible = window.nomesDisponibles ? !estaBloquejada : true;
-
-                card.style.display = (matchText && matchAlc && matchDisponible) ? 'block' : 'none';
+                if (window.filtreTipus === 'amb' || window.filtreTipus === 'sense') {
+                    matchAlc = (card.dataset.alcohol === window.filtreTipus);
+                } else if (window.filtreTipus === 'disponibles') {
+                    matchAlc = (card.dataset.disponible === 'si');
+                }
+                
+                card.style.display = (matchText && matchAlc) ? 'block' : 'none';
             });
         }
-
+        
         function filtrar(tipus, boto) {
-            window.filtre = tipus;
-            // Traiem la classe 'active' de tots els botons que no siguin el de 'Disponibles'
-            document.querySelectorAll('.btn-filtre:not(#btn-disponibles)').forEach(b => b.classList.remove('active'));
+            window.filtreTipus = tipus;
+            document.querySelectorAll('.btn-filtre').forEach(b => b.classList.remove('active'));
             boto.classList.add('active');
             aplicarFiltres();
         }
-
-       function toggleDisponibles(boto) {
-            window.nomesDisponibles = !window.nomesDisponibles;
-            if (window.nomesDisponibles) {
-                boto.style.background = '#7b61ff'; // Lila principal
-                boto.style.color = 'white';
-            } else {
-                boto.style.background = '#121421'; // Fons fosc inactiu
-                boto.style.color = '#7b61ff';
-            }
-            aplicarFiltres();
-        }
-
+        
         document.getElementById('cercador').addEventListener('input', aplicarFiltres);
     </script>
 </body>
 </html>
-

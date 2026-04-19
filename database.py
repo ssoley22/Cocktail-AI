@@ -41,13 +41,12 @@ def get_ingredients():
 
 def get_muntatge():
     '''
-    Retorna l'estat actual de les 6 posicions del carril
-    * Fa un JOIN amb Ingredients per obtenir el nom, categoria i si té alcohol
-    [{'Posicio': , 'ID_Ingredient': , 'Nom_Liquid': , 'Categoria': , 'Te_Alcohol': , 'Capacitat_Actual_ml': }, ...]
+    Retorna l'estat de les 6 posicions del carril
+    [{'Posicio': ,'ID_Ingredient': ,'Nom_Liquid': ,'Categoria': ,'Capacitat_Actual_ml': }, ...]
     '''
     connexio = connectar()
     llistat = connexio.execute("""
-                                SELECT m.Posicio, m.ID_Ingredient, i.Nom_Liquid, i.Categoria, i.Te_Alcohol, m.Capacitat_Actual_ml
+                                SELECT m.Posicio, m.ID_Ingredient, i.Nom_Liquid, i.Categoria, m.Capacitat_Actual_ml
                                 FROM Muntatge m
                                 JOIN Ingredients i ON m.ID_Ingredient = i.ID_Ingredient
                                 ORDER BY m.Posicio
@@ -56,84 +55,67 @@ def get_muntatge():
     return [dict(fila) for fila in llistat]
 
 
-
 def get_coctel(id):
     '''
-    Retorna un còctel concret amb els seus ingredients, retorna None si no existeix
-    {'ID_Coctel': ,'Nom_Coctel': ,'Descripcio': ,'Alcoholic': ,'Recepta': [{'Posicio': ,'Nom_Liquid': ,'Quantitat_ml': ,'Ordre': },...]}
+    Retorna un còctel concret amb els seus ingredients i si té alcohol
     '''
     connexio = connectar()
+    
+    # MODIFICACIÓ: Afegim una subquery per calcular si el còctel és alcoholic (0 o 1)
     coctel = connexio.execute("""
-                                SELECT c.*,
-                                (SELECT MAX(i.Te_Alcohol)
-                                FROM Receptes r
-                                JOIN Ingredients i ON i.Categoria = r.Categoria
-                                WHERE r.ID_Coctel = c.ID_Coctel) as Alcoholic
-                                FROM Coctels c
-                                WHERE c.ID_Coctel = ?
+        SELECT c.*, 
+        (SELECT MAX(i.Te_Alcohol) 
+         FROM Receptes r 
+         JOIN Ingredients i ON i.Categoria = r.Categoria 
+         WHERE r.ID_Coctel = c.ID_Coctel) as Alcoholic
+        FROM Coctels c 
+        WHERE c.ID_Coctel = ?
     """, (id,)).fetchone()
 
     if coctel is None:
         connexio.close()
         return None
 
+    # Obtenim els ingredients de la recepta que estan actualment al muntatge
     ingredients = connexio.execute("""
-                                    SELECT MIN(m.Posicio) as Posicio, i.Nom_Liquid, r.Quantitat_ml, r.Ordre
-                                    FROM Receptes r
-                                    JOIN Ingredients i ON i.Categoria = r.Categoria
-                                    JOIN Muntatge m ON m.ID_Ingredient = i.ID_Ingredient
-                                    WHERE r.ID_Coctel = ?
-                                    GROUP BY r.Categoria
-                                    ORDER BY r.Ordre ASC
+        SELECT m.Posicio, i.Nom_Liquid, r.Quantitat_ml, r.Ordre
+        FROM Receptes r
+        JOIN Ingredients i ON i.Categoria = r.Categoria
+        JOIN Muntatge m ON m.ID_Ingredient = i.ID_Ingredient
+        WHERE r.ID_Coctel = ?
+        GROUP BY r.Categoria
+        ORDER BY r.Ordre ASC
     """, (id,)).fetchall()
+    
     connexio.close()
 
     resultat = dict(coctel)
+    # Ens assegurem que Alcoholic sigui un enter (0 o 1) per no tenir problemes al HTML
     resultat["Alcoholic"] = int(resultat["Alcoholic"]) if resultat["Alcoholic"] is not None else 0
     resultat["Recepta"] = [dict(i) for i in ingredients]
+    
     return resultat
-
 
 def get_coctels_disponibles():
     '''
-    Retorna els còctels preparables amb l'estoc actual del carril i les categories dels seus ingredients.
-    [{'ID_Coctel': , 'Nom_Coctel': , 'Descripcio': , 'Ingredients': 'Vodka,Llimona,...'}, ...]
+    Retorna una llista amb tots els còctels de la base de dades que es poden preparar
+    [{'ID_Coctel': , 'Nom_Coctel': , 'Descripcio': }, ...]
     '''
     connexio = connectar()
-    llistat = connexio.execute("""
-        SELECT c.ID_Coctel, c.Nom_Coctel, c.Descripcio,
-               GROUP_CONCAT(DISTINCT r.Categoria) as Ingredients
-        FROM Coctels c
-        JOIN Receptes r ON r.ID_Coctel = c.ID_Coctel
-        WHERE NOT EXISTS (
-            SELECT 1 FROM Receptes r2
-            WHERE r2.ID_Coctel = c.ID_Coctel
-            AND r2.Categoria NOT IN (
-                SELECT i.Categoria FROM Muntatge m
-                JOIN Ingredients i ON m.ID_Ingredient = i.ID_Ingredient
-                WHERE m.Capacitat_Actual_ml >= r2.Quantitat_ml
-            )
-        )
-        GROUP BY c.ID_Coctel
-    """).fetchall()
-    connexio.close()
-    return [dict(fila) for fila in llistat]
-
-
-def get_tots_els_coctels():
-    '''
-    Retorna tots els còctels (disponibles o no) amb camp Alcoholic calculat.
-    [{'ID_Coctel': , 'Nom_Coctel': , 'Descripcio': , 'Alcoholic': }, ...]
-    '''
-    connexio = connectar()
-    llistat = connexio.execute("""
-        SELECT c.*,
-        (SELECT MAX(i.Te_Alcohol)
-         FROM Receptes r
-         JOIN Ingredients i ON i.Categoria = r.Categoria
-         WHERE r.ID_Coctel = c.ID_Coctel) as Alcoholic
-        FROM Coctels c
-    """).fetchall()
+    llistat = connexio.execute("""SELECT c.ID_Coctel, c.Nom_Coctel, c.Descripcio
+                               FROM Coctels c
+                               WHERE NOT EXISTS (
+                                    SELECT 1 FROM Receptes r
+                                    WHERE r.ID_Coctel = c.ID_Coctel
+                                    AND r.Categoria
+                                    NOT IN (
+                                    SELECT i.Categoria
+                                    FROM Muntatge m
+                                    JOIN Ingredients i ON m.ID_Ingredient = i.ID_Ingredient
+                                    WHERE m.Capacitat_Actual_ml >= r.Quantitat_ml
+                                    )
+                               )
+                               """).fetchall()
     connexio.close()
     return [dict(fila) for fila in llistat]
 
@@ -175,4 +157,31 @@ def restar_estoc(id_coctel):
     connexio.commit()
     connexio.close()
     return True
+
+def get_tots_els_coctels():
+    '''
+    Retorna absolutament tots els còctels per al catàleg manual.
+    També mirem si tenen alcohol sumant si algun ingredient de la recepta en té.
+    '''
+    connexio = connectar()
+    # Agafem els còctels i mirem si algun dels seus ingredients té alcohol (Te_Alcohol = 1)
+    llistat = connexio.execute("""
+        SELECT c.*, 
+        (SELECT MAX(i.Te_Alcohol) 
+         FROM Receptes r 
+         JOIN Ingredients i ON i.Categoria = r.Categoria 
+         WHERE r.ID_Coctel = c.ID_Coctel) as Alcoholic
+        FROM Coctels c
+    """).fetchall()
+    connexio.close()
+    return [dict(fila) for fila in llistat]
+
+def get_ids_disponibles():
+    '''
+    Retorna només una llista amb els IDs dels còctels que es poden fer ARA.
+    Aquesta funció ens servirà per posar el "check" de disponibilitat.
+    '''
+    coctels_ok = get_coctels_disponibles()
+    return [c['ID_Coctel'] for c in coctels_ok]
+
 

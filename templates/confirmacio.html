@@ -44,6 +44,9 @@
 
         <div style="font-size: 5rem;">🍹</div>
         <h1>{{ coctel.Nom_Coctel }}</h1>
+        {% if coctel.frase_barman %}
+        <p style="color: #888; font-style: italic; margin: 0 0 20px 0;">"{{ coctel.frase_barman }}"</p>
+        {% endif %}
         
         <div class="recepta">
             {% for ing in coctel.Recepta %}

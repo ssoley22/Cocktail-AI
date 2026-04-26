@@ -2,34 +2,23 @@
 <html lang="ca">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/static/css/base.css">
     <title>Sorprèn-me - Cocktail IA</title>
     <style>
         body { 
-            background-color: #05050a; 
-            color: white; 
-            font-family: 'Segoe UI', sans-serif; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
             min-height: 100vh; 
-            margin: 0; 
         }
-
-        /* El botó unificat de tornada */
-        .btn-back { 
-            position: fixed; top: 25px; left: 25px; 
-            color: #888; text-decoration: none; font-weight: bold; 
-            border: 1px solid #333; padding: 10px 15px; border-radius: 12px; 
-            background: rgba(18, 20, 33, 0.8); z-index: 100; transition: 0.3s; 
-        }
-        .btn-back:hover { color: #7b61ff; border-color: #7b61ff; transform: translateX(-5px); }
 
         /* Contenidor central amb estil "sorpresa" */
         .container { 
-            background: #121421; 
+            background: var(--color-superficie); 
             padding: 50px; 
             border-radius: 40px; 
-            border: 2px dashed #7b61ff; /* Marc clàssic de "sorpresa" */
+            border: 2px dashed var(--color-primari); /* Marc clàssic de "sorpresa" */
             text-align: center; 
             max-width: 450px; 
             width: 90%; 
@@ -46,7 +35,7 @@
             50% { transform: translateY(-15px) rotate(5deg); } 
         }
 
-        h1 { color: #7b61ff; font-size: 2.8rem; margin: 0; }
+        h1 { color: var(--color-primari); font-size: 2.8rem; margin: 0; }
         .subtext { color: #555; text-transform: uppercase; letter-spacing: 3px; font-size: 0.8rem; margin-bottom: 10px; }
         .desc { color: #888; font-style: italic; margin: 20px 0 40px 0; min-height: 50px; line-height: 1.5; }
 
@@ -54,42 +43,21 @@
         
         /* Botó principal d'acceptar */
         .btn-si { 
-            background: #7b61ff; color: white; padding: 22px; border-radius: 20px; 
+            background: var(--color-primari); color: white; padding: 22px; border-radius: 20px; 
             text-decoration: none; font-weight: bold; font-size: 1.3rem; 
             transition: 0.3s; border: none; cursor: pointer;
             box-shadow: 0 10px 25px rgba(123, 97, 255, 0.3);
         }
-        .btn-si:hover { background: #8e77ff; transform: scale(1.03); }
+        .btn-si:hover { background: var(--color-primari-clar); transform: scale(1.03); }
 
         /* Botó per tornar a provar sort */
         .btn-refresh { 
-            background: transparent; color: #7b61ff; padding: 15px; border-radius: 20px; 
-            text-decoration: none; border: 1px solid #7b61ff; font-weight: bold; 
+            background: transparent; color: var(--color-primari); padding: 15px; border-radius: 20px; 
+            text-decoration: none; border: 1px solid var(--color-primari); font-weight: bold; 
             cursor: pointer; transition: 0.3s; 
         }
         .btn-refresh:hover { background: rgba(123, 97, 255, 0.1); }
 
-        .ia-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 5, 10, 0.95);
-            z-index: 1000;
-            display: none; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
-        }
-        .ia-spinner {
-            font-size: 6rem;
-            animation: pulseIA 1s infinite alternate ease-in-out;
-            filter: drop-shadow(0 0 20px #7b61ff);
-        }
-        @keyframes pulseIA {
-            from { transform: scale(0.9); opacity: 0.6; filter: drop-shadow(0 0 10px #7b61ff); }
-            to   { transform: scale(1.15); opacity: 1;   filter: drop-shadow(0 0 40px #7b61ff); }
-        }
-        .progress-bar-container { width: 280px; height: 4px; background: #1a1d33; border-radius: 10px; overflow: hidden; }
-        .progress-bar { height: 100%; width: 40%; background: #7b61ff; border-radius: 10px; animation: slide 1.5s ease-in-out infinite; }
-        @keyframes slide {
-            0%   { transform: translateX(-100%); }
-            100% { transform: translateX(350%);  }
-        }
     </style>
 </head>
 <body>
@@ -100,7 +68,7 @@
         <div class="icona-random">🎲</div>
         <p class="subtext">La teva sorpresa és:</p>
         <h1>{{ coctel.Nom_Coctel }}</h1>
-        <p class="desc">"{{ coctel.Descripcio if coctel.Descripcio else "Una combinació mística seleccionada per la nostra IA." }}"</p>
+        <p class="desc">"{{ coctel.Descripcio if coctel.Descripcio else "L'atzar ha parlat. T'atreveixes a provar aquesta combinació?" }}"</p>
 
         <div class="grup-accions">
             <a href="/confirmacio/{{ coctel.ID_Coctel }}?origen=/aleatori" class="btn-si">M'AGRADA, AQUEST! ✅</a>
@@ -109,14 +77,6 @@
         </div>
     </div>
 
-    <div id="ia-loading" class="ia-overlay">
-    <div class="ia-spinner">🧠</div>
-    <h2 style="color: #7b61ff; margin-bottom: 5px;">Processant Emocions...</h2>
-    <p style="color: #888;">La IA està buscant la teva beguda ideal</p>
-    <div class="progress-bar-container">
-        <div class="progress-bar"></div>
-    </div>
-</div>
 </body>
 </html>
 

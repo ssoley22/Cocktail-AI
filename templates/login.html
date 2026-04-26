@@ -2,31 +2,38 @@
 <html lang="ca">
 <head>
     <meta charset="UTF-8">
-    <title>Accés Propietari</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <title>Accés Admin - Cocktail IA</title>
     <style>
-        body { background: #05050a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-card { background: #121421; padding: 30px; border-radius: 15px; border: 1px solid #333; width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h3 { color: #7b61ff; margin-top: 0; }
-        input { width: 100%; padding: 12px; margin: 10px 0; background: #1c1f33; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #7b61ff; border: none; color: white; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        button:hover { background: #6347d1; }
-        .error { color: #ff4b4b; margin-bottom: 15px; font-size: 0.9rem; background: rgba(255,75,75,0.1); padding: 5px; border-radius: 5px; }
-        .btn-back { position: fixed; top: 25px; left: 25px; color: #888; text-decoration: none; font-weight: bold; border: 1px solid #333; padding: 10px 15px; border-radius: 12px; background: rgba(18, 20, 33, 0.8); transition: 0.3s; z-index: 100; }
-        .btn-back:hover { color: #7b61ff; border-color: #7b61ff; background: #121421; }
+        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .login-wrapper { width: 100%; max-width: 400px; text-align: center; padding: 20px; }
+        .login-subtitol { color: var(--color-text-gris); font-size: 0.9rem; margin-bottom: 40px; }
+        .btn-login { width: 100%; padding: 18px; background: var(--color-primari); color: white; border: none; border-radius: 16px; font-size: 1rem; font-weight: bold; letter-spacing: 1.5px; cursor: pointer; transition: 0.3s; margin-top: 12px; }
+        .btn-login:hover { background: var(--color-primari-clar); transform: translateY(-2px); }
+        .error { color: var(--color-error); font-size: 0.9rem; background: rgba(255,75,75,0.1); border: 1px solid rgba(255,75,75,0.2); padding: 12px; border-radius: 12px; margin-bottom: 20px; }
+        .link-tornar { display: block; color: var(--color-text-fosc); text-decoration: none; font-size: 0.85rem; margin-top: 28px; transition: 0.3s; }
+        .link-tornar:hover { color: var(--color-primari); }
     </style>
 </head>
 <body>
-    <a href="/" class="btn-back">← INICI</a>
-
-    <div class="login-card">
-        <h3>🔐 Accés Admin</h3>
-        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    <div class="login-wrapper">
+        <div style="font-size: 2.5rem; margin-bottom: 12px;">⚙️</div>
+        <h1>Accés Admin</h1>
+        <p class="login-subtitol">Zona restringida al propietari</p>
+        {% if error %}<div class="error">{{ error }}</div>{% endif %}
         <form method="POST" action="/login">
-            <input type="text" name="username" placeholder="Usuari" required>
-            <input type="password" name="password" placeholder="Contrasenya" required>
-            <button type="submit">Entrar</button>
+            <div class="camp-grup">
+                <label>USUARI</label>
+                <div class="camp-input"><span class="icona">👤</span><input type="text" name="username" placeholder="Nom d'usuari" required></div>
+            </div>
+            <div class="camp-grup">
+                <label>CONTRASENYA</label>
+                <div class="camp-input"><span class="icona">🔒</span><input type="password" name="password" placeholder="Contrasenya" required></div>
+            </div>
+            <button type="submit" class="btn-login">ENTRAR</button>
         </form>
+        <a href="/" class="link-tornar">← Tornar a l'inici</a>
     </div>
 </body>
 </html>
-

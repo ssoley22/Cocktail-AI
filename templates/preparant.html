@@ -2,17 +2,18 @@
 <html lang="ca">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/static/css/base.css">
     <title>Preparant - Cocktail IA</title>
     <style>
         body { 
-            background: #05050a; color: white; font-family: 'Segoe UI', sans-serif; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            height: 100vh; margin: 0; overflow: hidden;
+            height: 100vh; overflow: hidden;
         }
 
         .container { text-align: center; width: 90%; max-width: 500px; }
 
-        h1 { color: #7b61ff; font-size: 2.8rem; margin-bottom: 10px; text-shadow: 0 0 20px rgba(123, 97, 255, 0.3); }
+        h1 { color: var(--color-primari); font-size: 2.8rem; margin-bottom: 10px; text-shadow: 0 0 20px rgba(123, 97, 255, 0.3); }
         .nom-coctel { font-size: 1.5rem; color: #eee; margin-bottom: 40px; font-weight: 300; }
 
         /* ANIMACIÓ DE LA COCTELERA */
@@ -28,20 +29,20 @@
 
         /* POSICIÓ A LA CUA */
         .cua-badge { 
-            background: rgba(123, 97, 255, 0.1); border: 1px solid #7b61ff; 
-            padding: 10px 20px; border-radius: 50px; color: #7b61ff;
+            background: rgba(123, 97, 255, 0.1); border: 1px solid var(--color-primari); 
+            padding: 10px 20px; border-radius: 50px; color: var(--color-primari);
             font-weight: bold; font-size: 0.9rem; margin-bottom: 30px; display: inline-block;
         }
 
         /* ESTATS EN TEMPS REAL */
         .estats-flux { display: flex; justify-content: space-between; width: 100%; margin-top: 20px; position: relative; }
         .estat { font-size: 0.8rem; color: #444; font-weight: bold; transition: 0.5s; position: relative; z-index: 2; }
-        .estat.actiu { color: #7b61ff; transform: scale(1.1); }
-        .estat.completat { color: #4caf50; }
+        .estat.actiu { color: var(--color-primari); transform: scale(1.1); }
+        .estat.completat { color: var(--color-ok); }
 
         /* Línia de fons dels estats */
         .linia { position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: #222; z-index: 1; transform: translateY(-50%); }
-        .linia-progress { position: absolute; top: 50%; left: 0; width: 0%; height: 2px; background: #7b61ff; z-index: 1; transform: translateY(-50%); transition: 1s; }
+        .linia-progress { position: absolute; top: 50%; left: 0; width: 0%; height: 2px; background: var(--color-primari); z-index: 1; transform: translateY(-50%); transition: 1s; }
 
         /* MISSATGE FINAL */
         #missatge-final { 
@@ -73,7 +74,7 @@
 
     <div id="missatge-final">
         <div style="font-size: 8rem;">🍸</div>
-        <h1 style="color: #4caf50;">La teva beguda és llesta!</h1>
+        <h1 style="color: var(--color-ok);">La teva beguda és llesta!</h1>
         <p style="color: #888; margin-top: 20px;">Gaudeix del teu {{ coctel.Nom_Coctel }}</p>
         <p style="color: #555; font-size: 0.8rem; margin-top: 50px;">Tornant a l'inici en 5 segons...</p>
     </div>

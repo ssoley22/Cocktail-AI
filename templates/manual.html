@@ -2,21 +2,21 @@
 <html lang="ca">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/static/css/base.css">
     <title>Manual - Cocktail IA</title>
     <style>
-        body { background-color: #05050a; color: white; font-family: sans-serif; padding: 40px; margin: 0; }
-        .btn-back { position: fixed; top: 25px; left: 25px; color: #888; text-decoration: none; font-weight: bold; border: 1px solid #333; padding: 10px 15px; border-radius: 12px; background: rgba(18, 20, 33, 0.8); z-index: 100; transition: 0.3s; }
-        .btn-back:hover { color: #7b61ff; border-color: #7b61ff; background: #121421; }
+        body { padding: 40px;}
         .header { text-align: center; margin-top: 50px; }
-        h1 { color: #7b61ff; font-size: 2.5rem; margin-bottom: 20px; }
+        h1 { color: var(--color-primari); font-size: 2.5rem; margin-bottom: 20px; }
         .controls { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; align-items: center; }
-        .search-bar { width: 100%; padding: 15px 25px; border-radius: 30px; border: 1px solid #333; background: #121421; color: white; outline: none; }
+        .search-bar { width: 100%; padding: 15px 25px; border-radius: 30px; border: 1px solid var(--color-vora); background: var(--color-superficie); color: white; outline: none; }
         .filtres { display: flex; gap: 10px; }
-        .btn-filtre { background: #121421; border: 1px solid #444; color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; transition: 0.3s; }
-        .btn-filtre.active { background: #7b61ff; border-color: #7b61ff; }
+        .btn-filtre { background: var(--color-superficie); border: 1px solid #444; color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; transition: 0.3s; }
+        .btn-filtre.active { background: var(--color-primari); border-color: var(--color-primari); }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; margin-top: 40px; }
         .card { background: #08080c; border-radius: 25px; border: 1px solid #222; overflow: hidden; text-decoration: none; color: white; transition: 0.4s; position: relative; display: block; height: 100%; }
-        .card:hover:not(.bloquejada) { border-color: #7b61ff; transform: translateY(-5px); }
+        .card:hover:not(.bloquejada) { border-color: var(--color-primari); transform: translateY(-5px); }
         .card.bloquejada { opacity: 0.4; filter: grayscale(0.9); cursor: not-allowed; border-style: dotted; }
         .card-body { padding: 20px; }
     </style>
@@ -31,7 +31,7 @@
                 <button class="btn-filtre active" onclick="filtrar('tots', this)">Tots</button>
                 <button class="btn-filtre" onclick="filtrar('amb', this)">Amb Alcohol</button>
                 <button class="btn-filtre" onclick="filtrar('sense', this)">Sense Alcohol</button>
-                <button id="btn-disponibles" class="btn-filtre" style="margin-left: 30px; border-color: #7b61ff; color: #7b61ff; display: flex; align-items: center; gap: 8px;" onclick="toggleDisponibles(this)">
+                <button id="btn-disponibles" class="btn-filtre" style="margin-left: 30px; border-color: var(--color-primari); color: var(--color-primari); display: flex; align-items: center; gap: 8px;" onclick="toggleDisponibles(this)">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                     </svg>
@@ -45,12 +45,12 @@
         <div class="card-item" data-nom="{{ coctel.Nom_Coctel | lower }}" data-alcohol="{{ 'amb' if coctel.Alcoholic == 1 else 'sense' }}">
             {% if coctel.disponible %}
             <a href="/confirmacio/{{ coctel.ID_Coctel }}" class="card">
-                <div style="height: 150px; background: #0a0b16; display: flex; align-items: center; justify-content: center; font-size: 3.5rem;">🍹</div>
+                <div style="height: 150px; background: var(--color-superficie-2); display: flex; align-items: center; justify-content: center; font-size: 3.5rem;">🍹</div>
                 <div class="card-body"><h3>{{ coctel.Nom_Coctel }}</h3><p style="color:#555;">{{ coctel.Descripcio }}</p></div>
             </a>
             {% else %}
             <div class="card bloquejada">
-                <div style="height: 150px; background: #0a0b16; display: flex; align-items: center; justify-content: center; font-size: 3.5rem;">🍹</div>
+                <div style="height: 150px; background: var(--color-superficie-2); display: flex; align-items: center; justify-content: center; font-size: 3.5rem;">🍹</div>
                 <div class="card-body">
                     <h3>{{ coctel.Nom_Coctel }}</h3><p style="color:#555;">{{ coctel.Descripcio }}</p>
                 </div>
@@ -88,11 +88,11 @@
        function toggleDisponibles(boto) {
             window.nomesDisponibles = !window.nomesDisponibles;
             if (window.nomesDisponibles) {
-                boto.style.background = '#7b61ff'; // Lila principal
+                boto.style.background = 'var(--color-primari)'; // Lila principal
                 boto.style.color = 'white';
             } else {
-                boto.style.background = '#121421'; // Fons fosc inactiu
-                boto.style.color = '#7b61ff';
+                boto.style.background = 'var(--color-superficie)'; // Fons fosc inactiu
+                boto.style.color = 'var(--color-primari)';
             }
             aplicarFiltres();
         }

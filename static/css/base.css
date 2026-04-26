@@ -1,0 +1,150 @@
+/* =====================================================
+   COCKTAIL IA — Base CSS
+   Importat per tots els templates HTML
+   ===================================================== */
+
+/* --- VARIABLES GLOBALS --- */
+:root {
+    --color-fons:        #05050a;
+    --color-superficie:  #121421;
+    --color-superficie-2: #0a0b16;
+    --color-primari:     #7b61ff;
+    --color-primari-clar: #8e77ff;
+    --color-primari-fosc: #6347d1;
+    --color-vora:        #333;
+    --color-vora-subtil: #1a1d33;
+    --color-text:        white;
+    --color-text-fosc:   #555;
+    --color-text-gris:   #888;
+    --color-ok:          #4caf50;
+    --color-error:       #ff4b4b;
+    --radi-gran:         40px;
+    --radi-mig:          20px;
+    --radi-boto:         12px;
+}
+
+/* --- RESET I BASE --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--color-fons);
+    color: var(--color-text);
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+}
+
+/* --- BOTÓ TORNAR (present a quasi totes les pàgines) --- */
+.btn-back {
+    position: fixed;
+    top: 25px;
+    left: 25px;
+    color: #888;
+    text-decoration: none;
+    font-weight: bold;
+    border: 1px solid var(--color-vora);
+    padding: 10px 15px;
+    border-radius: var(--radi-boto);
+    background: rgba(18, 20, 33, 0.8);
+    transition: 0.3s;
+    z-index: 100;
+}
+.btn-back:hover {
+    color: var(--color-primari);
+    border-color: var(--color-primari);
+    transform: translateX(-5px);
+}
+
+/* --- BADGES D'ALCOHOL (confirmacio.html) --- */
+.badge-alcohol {
+    display: inline-block;
+    padding: 5px 15px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+.amb-alcohol {
+    background: rgba(244, 67, 54, 0.1);
+    color: #f44336;
+    border: 1px solid #f44336;
+}
+.sense-alcohol {
+    background: rgba(76, 175, 80, 0.1);
+    color: var(--color-ok);
+    border: 1px solid var(--color-ok);
+}
+
+/* --- OVERLAY DE CÀRREGA IA (emocions.html, aleatori.html) --- */
+.ia-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(5, 5, 10, 0.95);
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+    text-align: center;
+}
+.ia-spinner {
+    font-size: clamp(4rem, 10vw, 6rem);
+    animation: pulseIA 1s infinite alternate ease-in-out;
+    filter: drop-shadow(0 0 20px var(--color-primari));
+}
+@keyframes pulseIA {
+    from { transform: scale(0.9); opacity: 0.6; filter: drop-shadow(0 0 10px var(--color-primari)); }
+    to   { transform: scale(1.15); opacity: 1;   filter: drop-shadow(0 0 40px var(--color-primari)); }
+}
+.progress-bar-container {
+    width: 100%;
+    max-width: 280px;
+    height: 4px;
+    background: var(--color-vora-subtil);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.progress-bar {
+    height: 100%;
+    width: 40%;
+    background: var(--color-primari);
+    border-radius: 10px;
+    animation: slide 1.5s ease-in-out infinite;
+}
+
+/* --- FORMULARIS (login i futurs formularis) --- */
+.camp-grup { margin-bottom: 16px; text-align: left; }
+.camp-grup label { display: block; font-size: 0.75rem; color: var(--color-text-gris); letter-spacing: 1.5px; margin-bottom: 8px; }
+.camp-input { display: flex; align-items: center; gap: 12px; background: var(--color-superficie); border: 1px solid var(--color-vora); border-radius: 14px; padding: 14px 18px; transition: 0.3s; }
+.camp-input:focus-within { border-color: var(--color-primari); box-shadow: 0 0 0 3px rgba(123, 97, 255, 0.1); }
+.camp-input input { flex: 1; background: transparent; border: none; outline: none; color: white; font-size: 1rem; font-family: inherit; }
+.camp-input input::placeholder { color: var(--color-text-fosc); }
+.camp-input .icona { font-size: 1rem; color: var(--color-text-fosc); flex-shrink: 0; }
+
+/* --- H1 COLOR PRIMARI (la majoria de pàgines) --- */
+h1 {
+    color: var(--color-primari);
+}
+
+@keyframes slide {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(350%); }
+}
+
+/* --- MEDIA QUERY GLOBAL (mòbil / pantalla 7") --- */
+@media (max-width: 768px) {
+    .btn-back {
+        top: 15px;
+        left: 15px;
+        padding: 12px 20px;
+        font-size: 1.1rem;
+        border-radius: 15px;
+    }
+}
+

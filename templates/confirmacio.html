@@ -2,34 +2,29 @@
 <html lang="ca">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/static/css/base.css">
     <title>Confirmar - Cocktail IA</title>
     <style>
-        body { background: #05050a; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .btn-back { position: fixed; top: 25px; left: 25px; color: #888; text-decoration: none; font-weight: bold; border: 1px solid #333; padding: 10px 15px; border-radius: 12px; background: rgba(18, 20, 33, 0.8); transition: 0.3s; }
-        .btn-back:hover { color: #7b61ff; border-color: #7b61ff; }
+        body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
         
-        .box { background: #121421; padding: 50px; border-radius: 40px; border: 1px solid #333; text-align: center; max-width: 450px; width: 90%; margin: 20px 0; }
-        h1 { color: #7b61ff; font-size: 2.5rem; margin-bottom: 10px; }
+        .box { background: var(--color-superficie); padding: 50px; border-radius: 40px; border: 1px solid var(--color-vora); text-align: center; max-width: 450px; width: 90%; margin: 20px 0; }
+        h1 { color: var(--color-primari); font-size: 2.5rem; margin-bottom: 10px; }
         
-        .recepta { background: #0a0b16; padding: 20px; border-radius: 20px; text-align: left; margin: 25px 0; border: 1px solid #1a1d33; }
+        .recepta { background: var(--color-superficie-2); padding: 20px; border-radius: 20px; text-align: left; margin: 25px 0; border: 1px solid var(--color-vora-subtil); }
         
         /* SEGURETAT */
         .seguretat-container { margin-bottom: 25px; display: flex; flex-direction: column; gap: 20px; align-items: center; }
         .check-edat { display: flex; align-items: center; gap: 15px; color: #ccc; font-size: 1.1rem; cursor: pointer; }
-        .check-edat input[type="checkbox"] { transform: scale(2.5); cursor: pointer; accent-color: #7b61ff; margin-right: 5px; }     
-        .captcha-wrapper { display: flex; align-items: center; gap: 15px; background: #0a0b16; padding: 10px 20px; border-radius: 15px; border: 1px dashed #555; }
-        .captcha-text { font-family: monospace; font-weight: bold; font-size: 1.6rem; color: #7b61ff; letter-spacing: 4px; }
+        .check-edat input[type="checkbox"] { transform: scale(2.5); cursor: pointer; accent-color: var(--color-primari); margin-right: 5px; }     
+        .captcha-wrapper { display: flex; align-items: center; gap: 15px; background: var(--color-superficie-2); padding: 10px 20px; border-radius: 15px; border: 1px dashed #555; }
+        .captcha-text { font-family: monospace; font-weight: bold; font-size: 1.6rem; color: var(--color-primari); letter-spacing: 4px; }
         
         .captcha-input { background: transparent; border: 2px solid #444; color: white; width: 80px; padding: 10px; border-radius: 8px; text-align: center; outline: none; font-size: 1.2rem; text-transform: uppercase; }
-        .captcha-input:focus { border-color: #7b61ff; }
+        .captcha-input:focus { border-color: var(--color-primari); }
 
-        .btn-prep { width: 100%; padding: 20px; background: #7b61ff; color: white; border: none; border-radius: 20px; font-weight: bold; font-size: 1.2rem; cursor: pointer; box-shadow: 0 0 20px rgba(123, 97, 255, 0.3); transition: 0.3s; }
+        .btn-prep { width: 100%; padding: 20px; background: var(--color-primari); color: white; border: none; border-radius: 20px; font-weight: bold; font-size: 1.2rem; cursor: pointer; box-shadow: 0 0 20px rgba(123, 97, 255, 0.3); transition: 0.3s; }
         .btn-prep:disabled { background: #222; color: #555; cursor: not-allowed; box-shadow: none; opacity: 0.5; }
-        
-        /* Etiqueta distintiva */
-        .badge-alcohol { display: inline-block; padding: 5px 15px; border-radius: 10px; font-size: 0.8rem; font-weight: bold; margin-bottom: 10px; }
-        .amb-alcohol { background: rgba(244, 67, 54, 0.1); color: #f44336; border: 1px solid #f44336; }
-        .sense-alcohol { background: rgba(76, 175, 80, 0.1); color: #4caf50; border: 1px solid #4caf50; }
     </style>
 </head>
 <body>
@@ -50,9 +45,9 @@
         
         <div class="recepta">
             {% for ing in coctel.Recepta %}
-            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1a1d33;">
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--color-vora-subtil);">
                 <span>{{ ing.Nom_Liquid }}</span>
-                <span style="color: #7b61ff;">{{ ing.Quantitat_ml }}ml</span>
+                <span style="color: var(--color-primari);">{{ ing.Quantitat_ml }}ml</span>
             </div>
             {% endfor %}
         </div>

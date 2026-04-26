@@ -2,14 +2,12 @@
 <html lang="ca">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/static/css/base.css">
     <title>Xat IA - Cocktail IA</title>
     <style>
         /* ESTIL ORIGINAL EXACTE */
         body { 
-            background-color: #05050a; 
-            color: white; 
-            font-family: 'Segoe UI', sans-serif; 
-            margin: 0; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
@@ -17,13 +15,6 @@
             height: 100vh; 
         }
         
-        .btn-back { 
-            position: fixed; top: 25px; left: 25px; 
-            color: #888; text-decoration: none; font-weight: bold; 
-            border: 1px solid #333; padding: 10px 15px; border-radius: 12px; 
-            background: rgba(18, 20, 33, 0.8); transition: 0.3s; z-index: 100; 
-        }
-        .btn-back:hover { color: #7b61ff; border-color: #7b61ff; transform: translateX(-5px); }
 
         /* Contenidor central flotant */
         .chat-container { 
@@ -34,7 +25,7 @@
             flex-direction: column; 
         }
         
-        h1 { font-size: 2rem; color: #7b61ff; text-align: center; margin-bottom: 20px; flex-shrink: 0; }
+        h1 { font-size: 2rem; color: var(--color-primari); text-align: center; margin-bottom: 20px; flex-shrink: 0; }
 
         /* Zona de missatges */
         #chat-box { 
@@ -47,17 +38,17 @@
             margin-bottom: 20px;
         }
         #chat-box::-webkit-scrollbar { width: 4px; }
-        #chat-box::-webkit-scrollbar-thumb { background: #1a1d33; border-radius: 10px; }
+        #chat-box::-webkit-scrollbar-thumb { background: var(--color-vora-subtil); border-radius: 10px; }
 
         /* Bombolles de xat */
         .bubble { padding: 20px; border-radius: 25px; max-width: 80%; line-height: 1.5; position: relative; }
-        .user-bubble { background: #1a1d33; align-self: flex-end; border-bottom-right-radius: 5px; border: 1px solid #333; word-break: break-word; }
-        .ai-bubble { background: #121421; align-self: flex-start; border-bottom-left-radius: 5px; border: 1px solid #7b61ff; }
+        .user-bubble { background: var(--color-vora-subtil); align-self: flex-end; border-bottom-right-radius: 5px; border: 1px solid var(--color-vora); word-break: break-word; }
+        .ai-bubble { background: var(--color-superficie); align-self: flex-start; border-bottom-left-radius: 5px; border: 1px solid var(--color-primari); }
 
         /* Targeta de còctel generada al xat (MOLT MILLORADA) */
         .coctel-card {
-            background: linear-gradient(145deg, #121421, #0a0b16);
-            border: 1px solid #7b61ff;
+            background: linear-gradient(145deg, var(--color-superficie), var(--color-superficie-2));
+            border: 1px solid var(--color-primari);
             box-shadow: 0 10px 25px rgba(123, 97, 255, 0.15);
             border-radius: 20px;
             padding: 25px; 
@@ -67,7 +58,7 @@
             align-self: center; /* La centrem perquè quedi com un resultat final */
             width: 90%;
         }
-        .coctel-card h3 { font-size: 1.5rem; color: #7b61ff; margin: 0 0 5px 0; }
+        .coctel-card h3 { font-size: 1.5rem; color: var(--color-primari); margin: 0 0 5px 0; }
         .coctel-desc { font-size: 0.9rem; color: #aaa; margin-bottom: 20px; font-style: italic; }
         
         .ingredients-grid {
@@ -78,14 +69,14 @@
             color: #eee; padding: 8px 15px; border-radius: 12px; font-size: 0.9rem; 
             border: 1px solid rgba(123, 97, 255, 0.3);
         }
-        .ingredient-tag strong { color: #7b61ff; margin-left: 5px; font-size: 1rem; }
+        .ingredient-tag strong { color: var(--color-primari); margin-left: 5px; font-size: 1rem; }
         
         .btn-confirmar-ia {
-            display: inline-block; width: 80%; background: #7b61ff; color: white; 
+            display: inline-block; width: 80%; background: var(--color-primari); color: white; 
             padding: 15px; border-radius: 15px; text-decoration: none; font-weight: bold;
             transition: 0.3s;
         }
-        .btn-confirmar-ia:hover { background: #8e77ff; transform: scale(1.02); }
+        .btn-confirmar-ia:hover { background: var(--color-primari-clar); transform: scale(1.02); }
 
         /* Comptador discret sota la bombolla */
         .msg-counter {
@@ -97,8 +88,8 @@
 
         /* Camp d'entrada auto-expandible */
         .input-group { 
-            display: flex; gap: 10px; background: #121421; padding: 10px; 
-            border-radius: 35px; border: 1px solid #333; align-items: flex-end;
+            display: flex; gap: 10px; background: var(--color-superficie); padding: 10px; 
+            border-radius: 35px; border: 1px solid var(--color-vora); align-items: flex-end;
         }
         .input-group textarea { 
             flex: 1; background: transparent; border: none; color: white; 
@@ -109,16 +100,16 @@
             box-sizing: content-box;
         }
         .input-group textarea::-webkit-scrollbar { width: 4px; }
-        .input-group textarea::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        .input-group textarea::-webkit-scrollbar-thumb { background: var(--color-vora); border-radius: 10px; }
 
         .btn-send { 
-            background: #7b61ff; border: none; color: white; 
+            background: var(--color-primari); border: none; color: white; 
             width: 45px; height: 45px; border-radius: 50%; 
             cursor: pointer; transition: 0.3s; display: flex; 
             align-items: center; justify-content: center; font-size: 1.2rem;
             margin-bottom: 2px; 
         }
-        .btn-send:hover:not(:disabled) { transform: scale(1.1); background: #8e77ff; }
+        .btn-send:hover:not(:disabled) { transform: scale(1.1); background: var(--color-primari-clar); }
         
         /* El nou botó complet de Reiniciar */
         .btn-reset-full { 
@@ -132,7 +123,7 @@
 
         /* Animació punts */
         .typing { display: flex; gap: 5px; padding: 5px; }
-        .dot { width: 8px; height: 8px; background: #7b61ff; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
+        .dot { width: 8px; height: 8px; background: var(--color-primari); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
         .dot:nth-child(2) { animation-delay: 0.2s; }
         .dot:nth-child(3) { animation-delay: 0.4s; }
         @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
@@ -280,7 +271,7 @@
 
             card.innerHTML = `
                 <h3>🍹 ${dades.nom}</h3>
-                <p class="coctel-desc">Fórmula perfecta de 200ml generada en temps real.</p>
+                <p class="coctel-desc">Fórmula única generada en temps real per la nostra IA.</p>
                 ${ingredientsHTML}
                 <a href="/confirmacio_ia" class="btn-confirmar-ia">PREPARAR AQUESTA RECEPTA ✅</a>
             `;

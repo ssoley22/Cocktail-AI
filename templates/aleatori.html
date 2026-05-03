@@ -1,82 +1,122 @@
-<!DOCTYPE html>
-<html lang="ca">
-<head>
-    <meta charset="UTF-8">
+<!DOCTYPE html>             
+<html lang="ca">         
+<head>                       
+    <meta charset="UTF-8">  
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="stylesheet" href="/static/css/base.css">
-    <title>Sorprèn-me - Cocktail IA</title>
+    <link rel="stylesheet" href="/static/css/style.css"> 
+    <title>Cocktail IA - Aleatori</title>   
     <style>
-        body { 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            min-height: 100vh; 
-        }
-
-        /* Contenidor central amb estil "sorpresa" */
-        .container { 
+        .container {
             background: var(--color-superficie); 
-            padding: 50px; 
-            border-radius: 40px; 
-            border: 2px dashed var(--color-primari); /* Marc clàssic de "sorpresa" */
-            text-align: center; 
-            max-width: 450px; 
-            width: 90%; 
-            box-shadow: 0 0 50px rgba(123, 97, 255, 0.15);
+            padding: 40px;
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            align-items: center;
+            margin: auto; 
+            
+            border: 2px dashed var(--color-primari-suau);
+            width: 90%;
+            max-width: 550px; /* Evita que creixi infinitament */
+            box-shadow: 0 5px 40px var(--ombra-primari-suau);
         }
         
-        .icona-random { 
-            font-size: 6rem; margin-bottom: 20px; 
-            animation: bounce 1.5s infinite; 
-            display: inline-block;
-        }
-        @keyframes bounce { 
-            0%, 100% { transform: translateY(0) rotate(0deg); } 
-            50% { transform: translateY(-15px) rotate(5deg); } 
+        .icona-flotant {
+            font-size: 6rem;
+            margin-bottom: 10px;
+            display: inline-block; /* Serveix perquè pugui rotar */
+            
+            /* Cridem dues animacions alhora amb temps diferents */
+            animation: 
+                surar 1s ease-in-out infinite alternate,
+                balancejar 2s ease-in-out infinite alternate;
         }
 
-        h1 { color: var(--color-primari); font-size: 2.8rem; margin: 0; }
-        .subtext { color: #555; text-transform: uppercase; letter-spacing: 3px; font-size: 0.8rem; margin-bottom: 10px; }
-        .desc { color: #888; font-style: italic; margin: 20px 0 40px 0; min-height: 50px; line-height: 1.5; }
-
-        .grup-accions { display: flex; flex-direction: column; gap: 15px; }
-        
-        /* Botó principal d'acceptar */
-        .btn-si { 
-            background: var(--color-primari); color: white; padding: 22px; border-radius: 20px; 
-            text-decoration: none; font-weight: bold; font-size: 1.3rem; 
-            transition: 0.3s; border: none; cursor: pointer;
-            box-shadow: 0 10px 25px rgba(123, 97, 255, 0.3);
+        /* Animació 1: Només s'ocupa d'anar amunt i avall */
+        @keyframes surar {
+            0%   { translate: 0 0px; }
+            100% { translate: 0 -20px; }
         }
-        .btn-si:hover { background: var(--color-primari-clar); transform: scale(1.03); }
 
-        /* Botó per tornar a provar sort */
-        .btn-refresh { 
-            background: transparent; color: var(--color-primari); padding: 15px; border-radius: 20px; 
-            text-decoration: none; border: 1px solid var(--color-primari); font-weight: bold; 
-            cursor: pointer; transition: 0.3s; 
+        /* Animació 2: Només s'ocupa de rotar cap als costats */
+        @keyframes balancejar {
+            0%   { rotate: -8deg; }
+            100% { rotate: 8deg; }
         }
-        .btn-refresh:hover { background: rgba(123, 97, 255, 0.1); }
 
+        h1 {
+            font-size: 2.8rem;
+        }
+
+        .subtext {
+            color: var(--color-text-subtil);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+        }
+
+        .desc {
+            color: var(--color-text-subtil);
+            font-style: italic;
+            margin-top: 20px;
+        }
+
+        .grup-botons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 60px;
+        }
+
+        .btn-si {
+            background: var(--color-primari);
+            color: var(--color-text);
+            padding: 15px 30px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 1.4rem;
+            transition: 0.3s;
+        }
+
+        .btn-si:hover {
+            background: var(--color-primari-clar);
+            transform: scale(1.03);
+        }
+
+        .btn-refresh {
+            background: var(--color-superficie-claret);
+            color: var(--color-primari);
+            padding: 15px 30px;
+            border-radius: 20px;
+            border: 2px solid var(--color-vora);
+            text-decoration: none;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
     </style>
+
+
 </head>
 <body>
+    <div class="main-container">
+        <div class="top-bar">
+            <a href="/" class="tornar-btn">← Tornar</a>
+        </div>
 
-    <a href="/" class="btn-back">← INICI</a>
-
-    <div class="container">
-        <div class="icona-random">🎲</div>
-        <p class="subtext">La teva sorpresa és:</p>
-        <h1>{{ coctel.Nom_Coctel }}</h1>
-        <p class="desc">"{{ coctel.Descripcio if coctel.Descripcio else "L'atzar ha parlat. T'atreveixes a provar aquesta combinació?" }}"</p>
-
-        <div class="grup-accions">
-            <a href="/confirmacio/{{ coctel.ID_Coctel }}?origen=/aleatori" class="btn-si">M'AGRADA, AQUEST! ✅</a>
+        <div class="container">
+            <div class="icona-flotant">🎲</div>
+            <p class="subtext"> La teva sorpresa és:</p>
+            <h1>{{ coctel.Nom_Coctel }}</h1>
+            <p class="desc">"{{ coctel.Descripcio if coctel.Descripcio else "L'atzar ha parlat. T'atreveixes a provar aquesta combinació?" }}"</p>
             
-            <a href="/aleatori" class="btn-refresh">PROVA SORT DE NOU 🔄</a>
+            <div class="grup-botons">
+                <a href="/confirmacio/{{ coctel.ID_Coctel }}?origen=/aleatori" class="btn-si">✅ M'agrada, aquest!</a>
+                <a href="/aleatori" class="btn-refresh">Prova sort de nou</a>
+            </div>
         </div>
     </div>
-
 </body>
 </html>
-

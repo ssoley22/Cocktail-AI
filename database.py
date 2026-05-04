@@ -1,76 +1,40 @@
 import sqlite3
 import os
 
-# Ruta al fitxer de la base de dades
 RUTA_DB = os.path.join(os.path.dirname(__file__), "database.db")
 
-"""
-ESQUEMA BASE DE DADES (database.db)
-===================================
-1. Ingredients: [ID_Ingredient, Nom_Liquid, Te_Alcohol, Categoria]
-   Ex: (7, 'Absolut Vodka', 1, 'Vodka'), (35, 'Fanta Llimona', 0, 'Llimona')
-
-2. Coctels:     [ID_Coctel, Nom_Coctel, Descripcio]
-   Ex: (1, 'Vodka Llimona', ''), (2, 'Rom Sunrise', '')
-
-3. Receptes:    [ID_Coctel, Categoria, Quantitat_ml, Ordre]
-   Ex: (1, 'Vodka', 50, 1), (1, 'Llimona', 200, 2)
-
-4. Muntatge:    [Posicio, ID_Ingredient, Capacitat_Actual_ml]
-   Ex: (1, 7, 750), (2, 18, 1000)
-"""
-
-
-# Obre i retorna una connexió a la base de dades
 def connectar():
     connexio = sqlite3.connect(RUTA_DB)
     connexio.row_factory = sqlite3.Row
     return connexio
 
-
 def get_ingredients():
-    '''
-    Retorna una llista amb tots els ingredients de la base de dades
-    [{'ID_Ingredient': , 'Nom_Liquid': , 'Te_Alcohol': , 'Categoria': }, ...]
-    '''
     connexio = connectar()
     llistat = connexio.execute("SELECT * FROM Ingredients").fetchall()
     connexio.close()
     return [dict(fila) for fila in llistat]
 
-
 def get_muntatge():
-    '''
-    Retorna l'estat actual de les 6 posicions del carril
-    * Fa un JOIN amb Ingredients per obtenir el nom, categoria i si té alcohol
-    [{'Posicio': , 'ID_Ingredient': , 'Nom_Liquid': , 'Categoria': , 'Te_Alcohol': , 'Capacitat_Actual_ml': }, ...]
-    '''
     connexio = connectar()
     llistat = connexio.execute("""
-                                SELECT m.Posicio, m.ID_Ingredient, i.Nom_Liquid, i.Categoria, i.Te_Alcohol, m.Capacitat_Actual_ml
-                                FROM Muntatge m
-                                JOIN Ingredients i ON m.ID_Ingredient = i.ID_Ingredient
-                                ORDER BY m.Posicio
+        SELECT m.Posicio, m.ID_Ingredient, i.Nom_Liquid, i.Categoria, i.Te_Alcohol, m.Capacitat_Actual_ml
+        FROM Muntatge m
+        JOIN Ingredients i ON m.ID_Ingredient = i.ID_Ingredient
+        ORDER BY m.Posicio
     """).fetchall()
     connexio.close()
     return [dict(fila) for fila in llistat]
 
-
-
 def get_coctel(id):
-    '''
-    Retorna un còctel concret amb els seus ingredients, retorna None si no existeix
-    {'ID_Coctel': ,'Nom_Coctel': ,'Descripcio': ,'Alcoholic': ,'Recepta': [{'Posicio': ,'Nom_Liquid': ,'Quantitat_ml': ,'Ordre': },...]}
-    '''
     connexio = connectar()
     coctel = connexio.execute("""
-                                SELECT c.*,
-                                (SELECT MAX(i.Te_Alcohol)
-                                FROM Receptes r
-                                JOIN Ingredients i ON i.Categoria = r.Categoria
-                                WHERE r.ID_Coctel = c.ID_Coctel) as Alcoholic
-                                FROM Coctels c
-                                WHERE c.ID_Coctel = ?
+        SELECT c.*,
+        (SELECT MAX(i.Te_Alcohol)
+         FROM Receptes r
+         JOIN Ingredients i ON i.Categoria = r.Categoria
+         WHERE r.ID_Coctel = c.ID_Coctel) as Alcoholic
+        FROM Coctels c
+        WHERE c.ID_Coctel = ?
     """, (id,)).fetchone()
 
     if coctel is None:
@@ -78,13 +42,13 @@ def get_coctel(id):
         return None
 
     ingredients = connexio.execute("""
-                                    SELECT MIN(m.Posicio) as Posicio, i.Nom_Liquid, r.Quantitat_ml, r.Ordre
-                                    FROM Receptes r
-                                    JOIN Ingredients i ON i.Categoria = r.Categoria
-                                    JOIN Muntatge m ON m.ID_Ingredient = i.ID_Ingredient
-                                    WHERE r.ID_Coctel = ?
-                                    GROUP BY r.Categoria
-                                    ORDER BY r.Ordre ASC
+        SELECT MIN(m.Posicio) as Posicio, i.Nom_Liquid, r.Quantitat_ml, r.Ordre
+        FROM Receptes r
+        JOIN Ingredients i ON i.Categoria = r.Categoria
+        JOIN Muntatge m ON m.ID_Ingredient = i.ID_Ingredient
+        WHERE r.ID_Coctel = ?
+        GROUP BY r.Categoria
+        ORDER BY r.Ordre ASC
     """, (id,)).fetchall()
     connexio.close()
 
@@ -93,12 +57,7 @@ def get_coctel(id):
     resultat["Recepta"] = [dict(i) for i in ingredients]
     return resultat
 
-
 def get_coctels_disponibles():
-    '''
-    Retorna els còctels preparables amb l'estoc actual del carril i les categories dels seus ingredients.
-    [{'ID_Coctel': , 'Nom_Coctel': , 'Descripcio': , 'Ingredients': 'Vodka,Llimona,...'}, ...]
-    '''
     connexio = connectar()
     llistat = connexio.execute("""
         SELECT c.ID_Coctel, c.Nom_Coctel, c.Descripcio,
@@ -119,12 +78,7 @@ def get_coctels_disponibles():
     connexio.close()
     return [dict(fila) for fila in llistat]
 
-
 def get_tots_els_coctels():
-    '''
-    Retorna tots els còctels (disponibles o no) amb camp Alcoholic calculat.
-    [{'ID_Coctel': , 'Nom_Coctel': , 'Descripcio': , 'Alcoholic': }, ...]
-    '''
     connexio = connectar()
     llistat = connexio.execute("""
         SELECT c.*,
@@ -137,24 +91,15 @@ def get_tots_els_coctels():
     connexio.close()
     return [dict(fila) for fila in llistat]
 
-
 def update_muntatge(posicio, id_ingredient, capacitat):
-    '''
-    Actualitza una posició del muntatge amb un nou ingredient i capacitat
-    '''
     connexio = connectar()
     connexio.execute("""UPDATE Muntatge
-                     SET Capacitat_Actual_ml = ?, ID_Ingredient = ?
-                     WHERE Posicio = ?""", (capacitat, id_ingredient, posicio))
+                        SET Capacitat_Actual_ml = ?, ID_Ingredient = ?
+                        WHERE Posicio = ?""", (capacitat, id_ingredient, posicio))
     connexio.commit()
     connexio.close()
 
-
 def restar_estoc(id_coctel):
-    '''
-    Resta les quantitats requerides per una recepta de l'estoc actual del muntatge.
-    Retorna True si ha anat bé, False si no hi ha prou estoc.
-    '''
     coctel = get_coctel(id_coctel)
     if coctel is None:
         return False
@@ -169,10 +114,64 @@ def restar_estoc(id_coctel):
     connexio = connectar()
     for ingredient in recepta:
         connexio.execute("""UPDATE Muntatge
-                         SET Capacitat_Actual_ml = Capacitat_Actual_ml - ?
-                         WHERE Posicio = ?
-                         """, (ingredient["Quantitat_ml"], ingredient["Posicio"]))
+                            SET Capacitat_Actual_ml = Capacitat_Actual_ml - ?
+                            WHERE Posicio = ?
+                            """, (ingredient["Quantitat_ml"], ingredient["Posicio"]))
     connexio.commit()
     connexio.close()
     return True
 
+# --- FUNCIONS NOVES (Comandes i Receptes Manuals) ---
+
+def registrar_comanda(nom_coctel):
+    # La taula ja existeix (està a crear_db.py) per tant només cal fer l'INSERT. Molt més ràpid.
+    try:
+        conn = connectar()
+        conn.execute("INSERT INTO Comandes (Nom_Cocktail) VALUES (?)", (nom_coctel,))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"❌ ERROR REGISTRANT COMANDA: {e}")
+
+def get_estadistiques():
+    connexio = connectar()
+    try:
+        llistat = connexio.execute("""
+            SELECT Nom_Cocktail, COUNT(*) as quantitat 
+            FROM Comandes 
+            GROUP BY Nom_Cocktail 
+            ORDER BY quantitat DESC
+        """).fetchall()
+        return [dict(fila) for fila in llistat]
+    except Exception as e:
+        return []
+    finally:
+        connexio.close()
+
+def crear_recepta_completa(nom, descripcio, ingredients):
+    """
+    Guarda un còctel nou buscant la categoria correcta dels líquids passats
+    """
+    conn = connectar()
+    cursor = conn.cursor()
+    try:
+        # Inserim només Nom i Descripcio (Alcoholic es dedueix sol)
+        cursor.execute("INSERT INTO Coctels (Nom_Coctel, Descripcio) VALUES (?, ?)", (nom, descripcio))
+        id_coctel = cursor.lastrowid
+        
+        ordre = 1
+        for ing in ingredients:
+            # Busquem a quina categoria pertany aquest líquid
+            cat_row = cursor.execute("SELECT Categoria FROM Ingredients WHERE ID_Ingredient = ?", (ing['id_liquid'],)).fetchone()
+            if cat_row:
+                categoria = cat_row['Categoria']
+                cursor.execute("INSERT INTO Receptes (ID_Coctel, Categoria, Quantitat_ml, Ordre) VALUES (?, ?, ?, ?)", 
+                               (id_coctel, categoria, ing['ml'], ordre))
+                ordre += 1
+        
+        conn.commit()
+    except Exception as e:
+        print(f"Error creant recepta: {e}")
+        conn.rollback()
+    finally:
+        conn.close()

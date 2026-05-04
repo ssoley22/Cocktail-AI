@@ -4,7 +4,6 @@ import os
 RUTA_DB = os.path.join(os.path.dirname(__file__), "database.db")
 
 def crear_database():
-    # Si ja existeix, l'eliminem per començar de zero
     if os.path.exists(RUTA_DB):
         os.remove(RUTA_DB)
         print("Base de dades existent eliminada.")
@@ -12,7 +11,7 @@ def crear_database():
     conn = sqlite3.connect(RUTA_DB)
 
     # ==========================================
-    # 1. CREAR TAULES
+    # 1. CREAR TAULES (Ara amb Comandes inclosa)
     # ==========================================
     conn.executescript("""
         CREATE TABLE Ingredients (
@@ -41,6 +40,12 @@ def crear_database():
             ID_Ingredient       INTEGER NOT NULL,
             Capacitat_Actual_ml INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (ID_Ingredient) REFERENCES Ingredients(ID_Ingredient)
+        );
+
+        CREATE TABLE Comandes (
+            ID_Comanda    INTEGER PRIMARY KEY AUTOINCREMENT,
+            Nom_Cocktail  TEXT NOT NULL,
+            Data_Hora     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
 
@@ -158,7 +163,6 @@ def crear_database():
         (48, 'Sweet Sunrise',            "El capvespre més sa. Un degradat de sabors cítrics i dolços lliure d'alcohol."),
         (49, 'San Francisco',            "El rei indiscutible dels còctels afruitats. Una barreja clàssica i plena de color sense gota d'alcohol."),
         (50, 'Llimonada Rosa',           "Refrescant, dolça i amb un toc divertit i vistós. Ideal per compartir en família."),
-        # NOUS CÒCTELS SENSE ALCOHOL:
         (51, 'Shirley Temple',           "El primer 'mocktail' de la història. Creat a Hollywood, és dolç, bonic i deliciós."),
         (52, 'Roy Rogers',               "El 'germà gran' del Shirley Temple. Combina l'alegria del colorant vermell amb el cos de la Cola."),
         (53, 'Arnold Palmer',            "Refrescant i perfectament equilibrat. El favorits dels golfistes americans per passar la set."),
@@ -176,201 +180,63 @@ def crear_database():
     # 4. INSERIR RECEPTES (129 Combinacions)
     # ==========================================
     receptes = [
-        # Whisky Cola (1)
-        (1, 'Refresc Cola',         200, 1),
-        (1, 'Whisky',               50,  2),
-        # Whisky Llimona (2)
-        (2, 'Refresc Llimona',      200, 1),
-        (2, 'Whisky',               50,  2),
-        # Whisky Ginger (3)
-        (3, 'Refresc Llima-Llimona',200, 1),
-        (3, 'Whisky',               50,  2),
-        # Whisky Sprite (4)
-        (4, 'Refresc Llima-Llimona',200, 1),
-        (4, 'Whisky',               50,  2),
-        # Whisky Taronja (5)
-        (5, 'Suc Taronja',          200, 1),
-        (5, 'Whisky',               50,  2),
-        # Vodka Llimona (6)
-        (6, 'Refresc Llimona',      200, 1),
-        (6, 'Vodka',                50,  2),
-        # Vodka Taronja (7)
-        (7, 'Refresc Taronja',      200, 1),
-        (7, 'Vodka',                50,  2),
-        # Vodka Tònica (8)
-        (8, 'Tònica',               200, 1),
-        (8, 'Vodka',                50,  2),
-        # Vodka Sprite (9)
-        (9, 'Refresc Llima-Llimona',200, 1),
-        (9, 'Vodka',                50,  2),
-        # Vodka Cola (10)
-        (10, 'Refresc Cola',        200, 1),
-        (10, 'Vodka',               50,  2),
-        # Vodka Pinya (11)
-        (11, 'Suc Pinya',           200, 1),
-        (11, 'Vodka',               50,  2),
-        # Vodka Préssec (12)
-        (12, 'Suc Préssec',         200, 1),
-        (12, 'Vodka',               50,  2),
-        # Cuba Libre (13)
-        (13, 'Refresc Cola',        200, 1),
-        (13, 'Rom',                 50,  2),
-        # Rom Llimona (14)
-        (14, 'Refresc Llimona',     200, 1),
-        (14, 'Rom',                 50,  2),
-        # Rom Taronja (15)
-        (15, 'Suc Taronja',         200, 1),
-        (15, 'Rom',                 50,  2),
-        # Rom Sprite (16)
-        (16, 'Refresc Llima-Llimona',200,1),
-        (16, 'Rom',                 50,  2),
-        # Rom Pinya (17)
-        (17, 'Suc Pinya',           200, 1),
-        (17, 'Rom',                 50,  2),
-        # Ginebra Llimona (18)
-        (18, 'Refresc Llimona',     200, 1),
-        (18, 'Ginebra',             50,  2),
-        # Gin Tònic (19)
-        (19, 'Tònica',              200, 1),
-        (19, 'Ginebra',             50,  2),
-        # Ginebra Sprite (20)
-        (20, 'Refresc Llima-Llimona',200,1),
-        (20, 'Ginebra',             50,  2),
-        # Ginebra Taronja (21)
-        (21, 'Refresc Taronja',     200, 1),
-        (21, 'Ginebra',             50,  2),
-        # Jäger Cola (22)
-        (22, 'Refresc Cola',        200, 1),
-        (22, 'Licor Herbes',        50,  2),
-        # Jäger Llimona (23)
-        (23, 'Refresc Llimona',     200, 1),
-        (23, 'Licor Herbes',        50,  2),
-        # Jäger Tònica (24)
-        (24, 'Tònica',              200, 1),
-        (24, 'Licor Herbes',        50,  2),
-        # Licor 43 Pinya (25)
-        (25, 'Suc Pinya',           200, 1),
-        (25, 'Licor Dolç',          50,  2),
-        # Licor 43 Cola (26)
-        (26, 'Refresc Cola',        200, 1),
-        (26, 'Licor Dolç',          50,  2),
-        # Malibu Pinya (27)
-        (27, 'Suc Pinya',           200, 1),
-        (27, 'Licor Coco',          50,  2),
-        # Malibu Cola (28)
-        (28, 'Refresc Cola',        200, 1),
-        (28, 'Licor Coco',          50,  2),
-        # Amaretto Cola (29)
-        (29, 'Refresc Cola',        200, 1),
-        (29, 'Licor Ametlla',       50,  2),
-        # Aperol Spritz Mecatrònic (30)
-        (30, 'Gasosa',              100, 1),
-        (30, 'Refresc Taronja',     100, 2),
-        (30, 'Aperitiu',            50,  3),
-        # Aperol Tònica (31)
-        (31, 'Tònica',              200, 1),
-        (31, 'Aperitiu',            50,  2),
-        # Campari Soda (32)
-        (32, 'Gasosa',              200, 1),
-        (32, 'Aperitiu',            50,  2),
-        # Vermut Taronja (33)
-        (33, 'Refresc Taronja',     150, 1),
-        (33, 'Vermut',              100, 2),
-        # Tequila Llimona (34)
-        (34, 'Refresc Llimona',     200, 1),
-        (34, 'Tequila',             50,  2),
-        # Tequila Sprite (35)
-        (35, 'Refresc Llima-Llimona',200,1),
-        (35, 'Tequila',             50,  2),
-        # Tequila Cola (36)
-        (36, 'Refresc Cola',        200, 1),
-        (36, 'Tequila',             50,  2),
-        # Vodka Sunrise (37)
-        (37, 'Suc Taronja',         150, 1),
-        (37, 'Vodka',               50,  2),
-        (37, 'Colorant Vermell',    30,  3),
-        # Tequila Sunrise (38)
-        (38, 'Suc Taronja',         150, 1),
-        (38, 'Tequila',             50,  2),
-        (38, 'Colorant Vermell',    30,  3),
-        # Rom Sunrise (39)
-        (39, 'Suc Taronja',         150, 1),
-        (39, 'Rom',                 50,  2),
-        (39, 'Colorant Vermell',    30,  3),
-        # Gin Sunrise (40)
-        (40, 'Suc Taronja',         150, 1),
-        (40, 'Ginebra',             50,  2),
-        (40, 'Colorant Vermell',    30,  3),
-        # Cosmopolitan (41)
-        (41, 'Colorant Vermell',    120, 1),
-        (41, 'Refresc Llimona',     80,  2),
-        (41, 'Vodka',               50,  3),
-        # Pink Lemonade (42)
-        (42, 'Refresc Llimona',     170, 1),
-        (42, 'Vodka',               50,  2),
-        (42, 'Colorant Vermell',    30,  3),
-        # Brisa Tropical (43)
-        (43, 'Suc Taronja',         100, 1),
-        (43, 'Colorant Vermell',    100, 2),
-        (43, 'Rom',                 50,  3),
-        # Tornavís (44)
-        (44, 'Suc Taronja',         200, 1),
-        (44, 'Vodka',               50,  2),
-        # Black Russian (45)
-        (45, 'Vodka',               30,  1),
-        (45, 'Licor Ametlla',       20,  2),
-        # Mexican Mule (46)
-        (46, 'Refresc Llima-Llimona',150,1),
-        (46, 'Tequila',             40,  2),
-        (46, 'Licor Taronja',       10,  3),
-        # Italian Job (47)
-        (47, 'Tònica',              150, 1),
-        (47, 'Aperitiu',            30,  2),
-        (47, 'Ginebra',             20,  3),
-        # Sweet Sunrise (48)
-        (48, 'Suc Taronja',         150, 1),
-        (48, 'Refresc Llimona',     50,  2),
-        (48, 'Colorant Vermell',    50,  3),
-        # San Francisco (49)
-        (49, 'Suc Taronja',         100, 1),
-        (49, 'Suc Pinya',           50,  2),
-        (49, 'Suc Préssec',         50,  3),
-        (49, 'Colorant Vermell',    30,  4),
-        # Llimonada Rosa (50)
-        (50, 'Refresc Llimona',     200, 1),
-        (50, 'Colorant Vermell',    40,  2),
-        
-        # --- RECEPTES DELS NOUS MOCKTAILS ---
-        
-        # Shirley Temple (51)
-        (51, 'Refresc Llima-Llimona',150, 1),
-        (51, 'Colorant Vermell',    20,  2),
-        
-        # Roy Rogers (52)
-        (52, 'Refresc Cola',        150, 1),
-        (52, 'Colorant Vermell',    20,  2),
-        
-        # Arnold Palmer (53)
-        (53, 'Té',                  100, 1),
-        (53, 'Refresc Llimona',     100, 2),
-        
-        # Puntx Tropical (54)
-        (54, 'Suc Pinya',           100, 1),
-        (54, 'Suc Préssec',         50,  2),
-        (54, 'Refresc Llima-Llimona',50, 3),
-        
-        # Bitter Taronja (55)
-        (55, 'Bitter',              100, 1),
-        (55, 'Suc Taronja',         100, 2),
-        
-        # Brindis Vermell (56)
-        (56, 'Tònica',              150, 1),
-        (56, 'Colorant Vermell',    50,  2),
-        
-        # Isotònic Festiu (57)
-        (57, 'Isotònic',            150, 1),
-        (57, 'Suc Llima',           20,  2),
-        (57, 'Colorant Vermell',    10,  3),
+        (1, 'Refresc Cola', 200, 1), (1, 'Whisky', 50, 2),
+        (2, 'Refresc Llimona', 200, 1), (2, 'Whisky', 50, 2),
+        (3, 'Refresc Llima-Llimona', 200, 1), (3, 'Whisky', 50, 2),
+        (4, 'Refresc Llima-Llimona', 200, 1), (4, 'Whisky', 50, 2),
+        (5, 'Suc Taronja', 200, 1), (5, 'Whisky', 50, 2),
+        (6, 'Refresc Llimona', 200, 1), (6, 'Vodka', 50, 2),
+        (7, 'Refresc Taronja', 200, 1), (7, 'Vodka', 50, 2),
+        (8, 'Tònica', 200, 1), (8, 'Vodka', 50, 2),
+        (9, 'Refresc Llima-Llimona', 200, 1), (9, 'Vodka', 50, 2),
+        (10, 'Refresc Cola', 200, 1), (10, 'Vodka', 50, 2),
+        (11, 'Suc Pinya', 200, 1), (11, 'Vodka', 50, 2),
+        (12, 'Suc Préssec', 200, 1), (12, 'Vodka', 50, 2),
+        (13, 'Refresc Cola', 200, 1), (13, 'Rom', 50, 2),
+        (14, 'Refresc Llimona', 200, 1), (14, 'Rom', 50, 2),
+        (15, 'Suc Taronja', 200, 1), (15, 'Rom', 50, 2),
+        (16, 'Refresc Llima-Llimona', 200, 1), (16, 'Rom', 50, 2),
+        (17, 'Suc Pinya', 200, 1), (17, 'Rom', 50, 2),
+        (18, 'Refresc Llimona', 200, 1), (18, 'Ginebra', 50, 2),
+        (19, 'Tònica', 200, 1), (19, 'Ginebra', 50, 2),
+        (20, 'Refresc Llima-Llimona', 200, 1), (20, 'Ginebra', 50, 2),
+        (21, 'Refresc Taronja', 200, 1), (21, 'Ginebra', 50, 2),
+        (22, 'Refresc Cola', 200, 1), (22, 'Licor Herbes', 50, 2),
+        (23, 'Refresc Llimona', 200, 1), (23, 'Licor Herbes', 50, 2),
+        (24, 'Tònica', 200, 1), (24, 'Licor Herbes', 50, 2),
+        (25, 'Suc Pinya', 200, 1), (25, 'Licor Dolç', 50, 2),
+        (26, 'Refresc Cola', 200, 1), (26, 'Licor Dolç', 50, 2),
+        (27, 'Suc Pinya', 200, 1), (27, 'Licor Coco', 50, 2),
+        (28, 'Refresc Cola', 200, 1), (28, 'Licor Coco', 50, 2),
+        (29, 'Refresc Cola', 200, 1), (29, 'Licor Ametlla', 50, 2),
+        (30, 'Gasosa', 100, 1), (30, 'Refresc Taronja', 100, 2), (30, 'Aperitiu', 50, 3),
+        (31, 'Tònica', 200, 1), (31, 'Aperitiu', 50, 2),
+        (32, 'Gasosa', 200, 1), (32, 'Aperitiu', 50, 2),
+        (33, 'Refresc Taronja', 150, 1), (33, 'Vermut', 100, 2),
+        (34, 'Refresc Llimona', 200, 1), (34, 'Tequila', 50, 2),
+        (35, 'Refresc Llima-Llimona', 200, 1), (35, 'Tequila', 50, 2),
+        (36, 'Refresc Cola', 200, 1), (36, 'Tequila', 50, 2),
+        (37, 'Suc Taronja', 150, 1), (37, 'Vodka', 50, 2), (37, 'Colorant Vermell', 30, 3),
+        (38, 'Suc Taronja', 150, 1), (38, 'Tequila', 50, 2), (38, 'Colorant Vermell', 30, 3),
+        (39, 'Suc Taronja', 150, 1), (39, 'Rom', 50, 2), (39, 'Colorant Vermell', 30, 3),
+        (40, 'Suc Taronja', 150, 1), (40, 'Ginebra', 50, 2), (40, 'Colorant Vermell', 30, 3),
+        (41, 'Colorant Vermell', 120, 1), (41, 'Refresc Llimona', 80, 2), (41, 'Vodka', 50, 3),
+        (42, 'Refresc Llimona', 170, 1), (42, 'Vodka', 50, 2), (42, 'Colorant Vermell', 30, 3),
+        (43, 'Suc Taronja', 100, 1), (43, 'Colorant Vermell', 100, 2), (43, 'Rom', 50, 3),
+        (44, 'Suc Taronja', 200, 1), (44, 'Vodka', 50, 2),
+        (45, 'Vodka', 30, 1), (45, 'Licor Ametlla', 20, 2),
+        (46, 'Refresc Llima-Llimona', 150, 1), (46, 'Tequila', 40, 2), (46, 'Licor Taronja', 10, 3),
+        (47, 'Tònica', 150, 1), (47, 'Aperitiu', 30, 2), (47, 'Ginebra', 20, 3),
+        (48, 'Suc Taronja', 150, 1), (48, 'Refresc Llimona', 50, 2), (48, 'Colorant Vermell', 50, 3),
+        (49, 'Suc Taronja', 100, 1), (49, 'Suc Pinya', 50, 2), (49, 'Suc Préssec', 50, 3), (49, 'Colorant Vermell', 30, 4),
+        (50, 'Refresc Llimona', 200, 1), (50, 'Colorant Vermell', 40, 2),
+        (51, 'Refresc Llima-Llimona', 150, 1), (51, 'Colorant Vermell', 20, 2),
+        (52, 'Refresc Cola', 150, 1), (52, 'Colorant Vermell', 20, 2),
+        (53, 'Té', 100, 1), (53, 'Refresc Llimona', 100, 2),
+        (54, 'Suc Pinya', 100, 1), (54, 'Suc Préssec', 50, 2), (54, 'Refresc Llima-Llimona', 50, 3),
+        (55, 'Bitter', 100, 1), (55, 'Suc Taronja', 100, 2),
+        (56, 'Tònica', 150, 1), (56, 'Colorant Vermell', 50, 2),
+        (57, 'Isotònic', 150, 1), (57, 'Suc Llima', 20, 2), (57, 'Colorant Vermell', 10, 3),
     ]
     conn.executemany(
         "INSERT INTO Receptes (ID_Coctel, Categoria, Quantitat_ml, Ordre) VALUES (?, ?, ?, ?)",
@@ -379,8 +245,6 @@ def crear_database():
 
     # ==========================================
     # 5. INSERIR MUNTATGE INICIAL (6 carrils)
-    # Pos1=Brugal, Pos2=Absolut Vodka, Pos3=Seagram's,
-    # Pos4=Suc de taronja, Pos5=Granadina, Pos6=Fanta de llimona
     # ==========================================
     muntatge = [
         (1, 18, 1000),  # Brugal (Rom)
@@ -397,17 +261,7 @@ def crear_database():
 
     conn.commit()
     conn.close()
-
-    # ==========================================
-    # 6. VERIFICACIÓ FINAL
-    # ==========================================
-    conn = sqlite3.connect(RUTA_DB)
-    print("✅ Base de dades creada correctament!")
-    print(f"   Ingredients: {conn.execute('SELECT COUNT(*) FROM Ingredients').fetchone()[0]}")
-    print(f"   Coctels:     {conn.execute('SELECT COUNT(*) FROM Coctels').fetchone()[0]}")
-    print(f"   Receptes:    {conn.execute('SELECT COUNT(*) FROM Receptes').fetchone()[0]}")
-    print(f"   Muntatge:    {conn.execute('SELECT COUNT(*) FROM Muntatge').fetchone()[0]}")
-    conn.close()
+    print("✅ Base de dades creada correctament amb la taula Comandes inclosa!")
 
 if __name__ == "__main__":
     crear_database()

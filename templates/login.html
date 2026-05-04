@@ -1,39 +1,183 @@
-<!DOCTYPE html>
-<html lang="ca">
-<head>
-    <meta charset="UTF-8">
+<!DOCTYPE html>             
+<html lang="ca">         
+<head>                       
+    <meta charset="UTF-8">  
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="stylesheet" href="/static/css/base.css">
-    <title>Accés Admin - Cocktail IA</title>
+    <link rel="stylesheet" href="/static/css/style.css"> 
+    <title>Cocktail IA - Accés Admin</title>   
     <style>
-        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .login-wrapper { width: 100%; max-width: 400px; text-align: center; padding: 20px; }
-        .login-subtitol { color: var(--color-text-gris); font-size: 0.9rem; margin-bottom: 40px; }
-        .btn-login { width: 100%; padding: 18px; background: var(--color-primari); color: white; border: none; border-radius: 16px; font-size: 1rem; font-weight: bold; letter-spacing: 1.5px; cursor: pointer; transition: 0.3s; margin-top: 12px; }
-        .btn-login:hover { background: var(--color-primari-clar); transform: translateY(-2px); }
-        .error { color: var(--color-error); font-size: 0.9rem; background: rgba(255,75,75,0.1); border: 1px solid rgba(255,75,75,0.2); padding: 12px; border-radius: 12px; margin-bottom: 20px; }
-        .link-tornar { display: block; color: var(--color-text-fosc); text-decoration: none; font-size: 0.85rem; margin-top: 28px; transition: 0.3s; }
-        .link-tornar:hover { color: var(--color-primari); }
+        /* Caixa central d'accés (inspirada en la targeta de confirmació) */
+        .login-box {
+            background: var(--color-superficie); 
+            padding: 40px;
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 2px solid var(--color-vora);
+            width: 90%;
+            max-width: 400px; /* Una mica més estreta que la de confirmació perquè és un formulari */
+            box-shadow: 0 5px 40px var(--ombra-primari-suau);
+            margin: auto; /* Això centra la targeta verticalment i horitzontal */
+        }
+
+        .icona-login {
+            font-size: 4rem;
+            margin-bottom: 10px;
+        }
+
+        .descripcio {
+            color: var(--color-text-subtil);
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        /* --- FORMULARI I INPUTS --- */
+        form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .camp-grup {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .camp-grup label {
+            font-size: 0.8rem;
+            color: var(--color-text-subtil);
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-left: 5px;
+        }
+
+        .camp-input {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            background: var(--color-superficie-2);
+            border: 2px solid var(--color-vora);
+            border-radius: 20px;
+            padding: 15px;
+            transition: 0.3s;
+        }
+
+        /* Efecte de llum lila quan cliques a dins per escriure */
+        .camp-input:focus-within {
+            border-color: var(--color-primari);
+            box-shadow: 0 0 15px var(--ombra-primari-suau);
+        }
+
+        .camp-input .icona {
+            font-size: 1.2rem;
+            margin-right: 15px;
+        }
+
+        .camp-input input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--color-text);
+            font-size: 1.1rem;
+            outline: none;
+        }
+
+        .camp-input input::placeholder {
+            color: var(--color-text-subtil);
+            opacity: 0.5;
+        }
+
+        /* --- MISSATGE D'ERROR --- */
+        .missatge-error {
+            width: 100%;
+            background: var(--color-enfadat-difuminat);
+            color: var(--color-error);
+            border: 1px solid var(--color-error);
+            padding: 15px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* --- BOTONS I ENLLAÇOS --- */
+        .btn-login {
+            width: 100%;
+            padding: 18px;
+            background: var(--color-primari);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            background: var(--color-primari-clar);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px var(--ombra-primari-suau);
+        }
+
+        .link-tornar {
+            margin-top: 25px;
+            color: var(--color-text-subtil);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .link-tornar:hover {
+            color: var(--color-primari);
+        }
     </style>
 </head>
 <body>
-    <div class="login-wrapper">
-        <div style="font-size: 2.5rem; margin-bottom: 12px;">⚙️</div>
-        <h1>Accés Admin</h1>
-        <p class="login-subtitol">Zona restringida al propietari</p>
-        {% if error %}<div class="error">{{ error }}</div>{% endif %}
-        <form method="POST" action="/login">
-            <div class="camp-grup">
-                <label>USUARI</label>
-                <div class="camp-input"><span class="icona">👤</span><input type="text" name="username" placeholder="Nom d'usuari" required></div>
-            </div>
-            <div class="camp-grup">
-                <label>CONTRASENYA</label>
-                <div class="camp-input"><span class="icona">🔒</span><input type="password" name="password" placeholder="Contrasenya" required></div>
-            </div>
-            <button type="submit" class="btn-login">ENTRAR</button>
-        </form>
-        <a href="/" class="link-tornar">← Tornar a l'inici</a>
+    <div class="main-container">
+        
+        <div class="login-box">
+            <div class="icona-login">⚙️</div>
+            <h1>Accés Admin</h1>
+            <p class="descripcio">Zona restringida al propietari</p>
+
+            {% if error %}
+                <div class="missatge-error">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST" action="/login">
+                <div class="camp-grup">
+                    <label>USUARI</label>
+                    <div class="camp-input">
+                        <span class="icona">👤</span>
+                        <input type="text" name="username" placeholder="Nom d'usuari" required>
+                    </div>
+                </div>
+
+                <div class="camp-grup">
+                    <label>CONTRASENYA</label>
+                    <div class="camp-input">
+                        <span class="icona">🔒</span>
+                        <input type="password" name="password" placeholder="Contrasenya" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login">ENTRAR</button>
+            </form>
+
+            <a href="/" class="link-tornar">← Tornar a l'inici</a>
+        </div>
+
     </div>
 </body>
 </html>

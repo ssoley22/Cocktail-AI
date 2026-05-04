@@ -1,104 +1,268 @@
-<!DOCTYPE html>
-<html lang="ca">
-<head>
-    <meta charset="UTF-8">
+<!DOCTYPE html>             
+<html lang="ca">         
+<head>                       
+    <meta charset="UTF-8">  
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="stylesheet" href="/static/css/base.css">
-    <title>Manual - Cocktail IA</title>
+    <link rel="stylesheet" href="/static/css/style.css"> 
+    <title>Cocktail IA - Manual</title>   
     <style>
-        body { padding: 40px;}
-        .header { text-align: center; margin-top: 50px; }
-        h1 { color: var(--color-primari); font-size: 2.5rem; margin-bottom: 20px; }
-        .controls { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; align-items: center; }
-        .search-bar { width: 100%; padding: 15px 25px; border-radius: 30px; border: 1px solid var(--color-vora); background: var(--color-superficie); color: white; outline: none; }
-        .filtres { display: flex; gap: 10px; }
-        .btn-filtre { background: var(--color-superficie); border: 1px solid #444; color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; transition: 0.3s; }
-        .btn-filtre.active { background: var(--color-primari); border-color: var(--color-primari); }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; margin-top: 40px; }
-        .card { background: #08080c; border-radius: 25px; border: 1px solid #222; overflow: hidden; text-decoration: none; color: white; transition: 0.4s; position: relative; display: block; height: 100%; }
-        .card:hover:not(.bloquejada) { border-color: var(--color-primari); transform: translateY(-5px); }
-        .card.bloquejada { opacity: 0.4; filter: grayscale(0.9); cursor: not-allowed; border-style: dotted; }
-        .card-body { padding: 20px; }
+        .capçalera h1 {
+            font-size: 2.5rem;
+            margin-bottom: 25px;
+        }
+
+        /* --- CONTROLS DE CERCA I FILTRES --- */
+        .controls-grup {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 40px;
+            padding: 0 15px;
+        }
+
+        .cercador-input {
+            width: 100%;
+            background: var(--color-superficie);
+            border: 2px solid var(--color-vora);
+            border-radius: 25px;
+            padding: 15px 25px;
+            color: var(--color-text);
+            font-size: 1.1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .cercador-input:focus {
+            border-color: var(--color-primari);
+            box-shadow: 0 0 15px var(--ombra-primari-suau);
+        }
+
+        .filtres-grup {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-filtre {
+            background: var(--color-superficie);
+            border: 1px solid var(--color-vora);
+            color: var(--color-text);
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+
+        .btn-filtre.active {
+            background: var(--color-primari);
+            border-color: var(--color-primari);
+            color: white;
+        }
+
+        .btn-toggle-disp {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--color-superficie);
+            border: 1px solid var(--color-primari);
+            color: var(--color-primari);
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+            margin-left: 15px; /* Una mica separat de la resta */
+        }
+
+        .btn-toggle-disp.actiu {
+            background: var(--color-primari);
+            color: white;
+        }
+
+        /* --- GRAELLA I TARGETES --- */
+        .graella {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px; /* Evita que quedi massa ample a pantalles grans */
+            padding: 10px;
+        }
+
+        .targeta-coctel {
+            position: relative;
+            background: var(--color-superficie-2);
+            border: 1px solid var(--color-vora);
+            border-radius: 25px;
+            padding: 25px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            text-decoration: none;
+            color: var(--color-text);
+            transition: 0.3s;
+            height: 100%; /* Fa que totes les targetes facin la mateixa alçada */
+        }
+
+        /* Efecte de la targeta DISPONIBLE */
+        a.targeta-coctel:hover {
+            border-color: var(--color-primari);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px var(--ombra-primari-suau);
+            background: var(--color-superficie);
+        }
+
+        /* Efecte de la targeta BLOQUEJADA */
+        div.targeta-coctel.bloquejada {
+            opacity: 0.5;
+            filter: grayscale(1);
+            cursor: not-allowed;
+            border-style: dashed;
+        }
+
+        /* Elements interns de la targeta */
+        .targeta-icona {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+
+        .targeta-coctel h3 {
+            color: var(--color-primari);
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+        }
+
+        .targeta-coctel p {
+            color: var(--color-text-subtil);
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        /* Petites etiquetes de dalt a la dreta (Estil Confirmació) */
+        .etiqueta-mini {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .etiqueta-mini.alcohol { background: var(--color-enfadat-difuminat); color: var(--color-error); border: 1px solid var(--color-error); }
+        .etiqueta-mini.sense-alcohol { background: var(--color-alegria-difuminat); color: var(--color-alegria); border: 1px solid var(--color-alegria); }
+
     </style>
 </head>
 <body>
-    <a href="/" class="btn-back">← INICI</a>
-    <div class="header">
-        <h1>Selecció de Còctels 🍸</h1>
-        <div class="controls">
-            <input type="text" id="cercador" class="search-bar" placeholder="Busca un còctel...">
-            <div class="filtres">
+    <div class="main-container">
+        
+        <div class="top-bar">
+            <a href="/" class="tornar-btn">← Tornar</a>
+        </div>
+
+        <div class="capçalera">
+            <h1>Selecció de Còctels 🍸</h1>
+        </div>
+
+        <div class="controls-grup">
+            <input type="text" id="cercador" class="cercador-input" placeholder="Busca un còctel pel seu nom...">
+            
+            <div class="filtres-grup">
                 <button class="btn-filtre active" onclick="filtrar('tots', this)">Tots</button>
                 <button class="btn-filtre" onclick="filtrar('amb', this)">Amb Alcohol</button>
                 <button class="btn-filtre" onclick="filtrar('sense', this)">Sense Alcohol</button>
-                <button id="btn-disponibles" class="btn-filtre" style="margin-left: 30px; border-color: var(--color-primari); color: var(--color-primari); display: flex; align-items: center; gap: 8px;" onclick="toggleDisponibles(this)">
+                
+                <button id="btn-disponibles" class="btn-toggle-disp" onclick="toggleDisponibles(this)">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                     </svg>
-                    Filtrar Disponibles
+                    Només Disponibles
                 </button>
             </div>
         </div>
-    </div>
-    <div class="grid">
-        {% for coctel in coctels %}
-        <div class="card-item" data-nom="{{ coctel.Nom_Coctel | lower }}" data-alcohol="{{ 'amb' if coctel.Alcoholic == 1 else 'sense' }}">
-            {% if coctel.disponible %}
-            <a href="/confirmacio/{{ coctel.ID_Coctel }}" class="card">
-                <div style="height: 150px; background: var(--color-superficie-2); display: flex; align-items: center; justify-content: center; font-size: 3.5rem;">🍹</div>
-                <div class="card-body"><h3>{{ coctel.Nom_Coctel }}</h3><p style="color:#555;">{{ coctel.Descripcio }}</p></div>
-            </a>
-            {% else %}
-            <div class="card bloquejada">
-                <div style="height: 150px; background: var(--color-superficie-2); display: flex; align-items: center; justify-content: center; font-size: 3.5rem;">🍹</div>
-                <div class="card-body">
-                    <h3>{{ coctel.Nom_Coctel }}</h3><p style="color:#555;">{{ coctel.Descripcio }}</p>
-                </div>
+
+        <div class="graella">
+            {% for coctel in coctels %}
+            <div class="card-item" data-nom="{{ coctel.Nom_Coctel | lower }}" data-alcohol="{{ 'amb' if coctel.Alcoholic == 1 else 'sense' }}">
+                
+                {% if coctel.disponible %}
+                    <a href="/confirmacio/{{ coctel.ID_Coctel }}" class="targeta-coctel">
+                {% else %}
+                    <div class="targeta-coctel bloquejada">
+                {% endif %}
+
+                    <span class="etiqueta-mini {{ 'alcohol' if coctel.Alcoholic == 1 else 'sense-alcohol' }}">
+                        {{ '+18' if coctel.Alcoholic == 1 else '0,0%' }}
+                    </span>
+                    <div class="targeta-icona">🍹</div>
+                    <h3>{{ coctel.Nom_Coctel }}</h3>
+                    <p>{{ coctel.Descripcio }}</p>
+
+                {% if coctel.disponible %}
+                    </a>
+                {% else %}
+                    </div>
+                {% endif %}
+
             </div>
-            {% endif %}
+            {% endfor %}
         </div>
-        {% endfor %}
+
     </div>
+
     <script>
-        // Variable global per saber si estem amagant els bloquejats
         window.nomesDisponibles = false;
+        window.filtreAlcohol = 'tots';
 
         function aplicarFiltres() {
-            const text = document.getElementById('cercador').value.toLowerCase();
-            document.querySelectorAll('.card-item').forEach(card => {
-                const matchText = card.dataset.nom.includes(text);
-                const matchAlc = (window.filtre === 'tots' || !window.filtre || card.dataset.alcohol === window.filtre);
+            const textCerca = document.getElementById('cercador').value.toLowerCase();
+            const totesLesTargetes = document.querySelectorAll('.card-item');
+
+            totesLesTargetes.forEach(card => {
+                const matchText = card.dataset.nom.includes(textCerca);
+                const matchAlc = (window.filtreAlcohol === 'tots' || card.dataset.alcohol === window.filtreAlcohol);
                 
                 // Mirem si la targeta té la classe 'bloquejada' dins seu
-                const estaBloquejada = card.querySelector('.card').classList.contains('bloquejada');
+                const estaBloquejada = card.querySelector('.targeta-coctel').classList.contains('bloquejada');
                 const matchDisponible = window.nomesDisponibles ? !estaBloquejada : true;
 
+                // Si compleix tots 3 filtres, es mostra, sinó s'amaga
                 card.style.display = (matchText && matchAlc && matchDisponible) ? 'block' : 'none';
             });
         }
 
-        function filtrar(tipus, boto) {
-            window.filtre = tipus;
-            // Traiem la classe 'active' de tots els botons que no siguin el de 'Disponibles'
-            document.querySelectorAll('.btn-filtre:not(#btn-disponibles)').forEach(b => b.classList.remove('active'));
-            boto.classList.add('active');
+        // Funció per als 3 botons de l'esquerra (Tots, Amb, Sense)
+        function filtrar(tipus, botoContext) {
+            window.filtreAlcohol = tipus;
+            
+            // Traiem la classe 'active' de tots i la posem només al que hem clicat
+            document.querySelectorAll('.btn-filtre').forEach(b => b.classList.remove('active'));
+            botoContext.classList.add('active');
+            
             aplicarFiltres();
         }
 
-       function toggleDisponibles(boto) {
+        // Funció exclusiva pel botó de "Disponibles"
+        function toggleDisponibles(botoContext) {
             window.nomesDisponibles = !window.nomesDisponibles;
+            
             if (window.nomesDisponibles) {
-                boto.style.background = 'var(--color-primari)'; // Lila principal
-                boto.style.color = 'white';
+                botoContext.classList.add('actiu');
             } else {
-                boto.style.background = 'var(--color-superficie)'; // Fons fosc inactiu
-                boto.style.color = 'var(--color-primari)';
+                botoContext.classList.remove('actiu');
             }
+            
             aplicarFiltres();
         }
 
+        // Executem la cerca cada cop que escriuen una lletra
         document.getElementById('cercador').addEventListener('input', aplicarFiltres);
     </script>
 </body>
 </html>
-

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <title>Com et sents? - Cocktail IA</title>
+    <style>
+        body { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            overflow: hidden;
+        }
+
+        h1 { font-size: 2.8rem; margin-bottom: 60px; color: var(--color-primari); text-align: center; }
+
+        /* CANVI A HORITZONTAL: 4 columnes d'una sola fila */
+        .container-emocions { 
+            display: grid; 
+            grid-template-columns: repeat(4, 200px); 
+            gap: 20px; 
+            justify-content: center;
+        }
+        
+        .face-btn { 
+            background: var(--color-superficie); 
+            border: 2px solid #222; 
+            border-radius: 35px; 
+            padding: 45px 10px; 
+            text-decoration: none; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 20px; 
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .emoji { font-size: 5rem; filter: grayscale(0.4); transition: 0.3s; }
+
+        /* Efectes de color en passar el ratolí */
+        .alegre:hover { border-color: var(--color-ok); background: rgba(76, 175, 80, 0.1); transform: translateY(-15px); }
+        .alegre:hover .emoji { filter: grayscale(0); transform: scale(1.15); }
+        
+        .trist:hover { border-color: #2196f3; background: rgba(33, 150, 243, 0.1); transform: translateY(-15px); }
+        .trist:hover .emoji { filter: grayscale(0); transform: scale(1.15); }
+
+        .estressat:hover { border-color: #ff9800; background: rgba(255, 152, 0, 0.1); transform: translateY(-15px); }
+        .estressat:hover .emoji { filter: grayscale(0); transform: scale(1.15); }
+
+        .enfadat:hover { border-color: #f44336; background: rgba(244, 67, 54, 0.1); transform: translateY(-15px); }
+        .enfadat:hover .emoji { filter: grayscale(0); transform: scale(1.15); }
+
+        .nom-emocio { font-weight: bold; font-size: 0.9rem; color: #555; letter-spacing: 2px; }
+        .face-btn:hover .nom-emocio { color: white; }
+    </style>
+</head>
+
+<body>
+
+    <a href="/" class="btn-back">← INICI</a>
+
+    <h1>Com et sents avui?</h1>
+
+    <div class="container-emocions">
+        <a href="/recomanacio/alegre" class="face-btn alegre">
+            <span class="emoji">😄</span>
+            <span class="nom-emocio">ALEGRE</span>
+        </a>
+        <a href="/recomanacio/trist" class="face-btn trist">
+            <span class="emoji">😢</span>
+            <span class="nom-emocio">TRIST</span>
+        </a>
+        <a href="/recomanacio/estressat" class="face-btn estressat">
+            <span class="emoji">😫</span>
+            <span class="nom-emocio">ESTRESSAT</span>
+        </a>
+        <a href="/recomanacio/enfadat" class="face-btn enfadat">
+            <span class="emoji">😡</span>
+            <span class="nom-emocio">ENFADAT</span>
+        </a>
+    </div>
+
+    <div id="ia-loading" class="ia-overlay">
+        <div class="ia-spinner">🪄</div>
+        <h2 style="color: var(--color-primari); margin-bottom: 5px;">Processant Emocions...</h2>
+        <p style="color: #888;">La IA està buscant la teva beguda ideal</p>
+        <div class="progress-bar-container">
+            <div class="progress-bar"></div>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.face-btn').forEach(boto => {
+            boto.addEventListener('click', function() {
+                document.getElementById('ia-loading').style.display = 'flex';
+            });
+        });
+    </script>
+
+</body>
+
+</html>
+

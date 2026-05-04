@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <title>Confirmar - Cocktail IA</title>
+    <style>
+        body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        
+        .box { background: var(--color-superficie); padding: 50px; border-radius: 40px; border: 1px solid var(--color-vora); text-align: center; max-width: 450px; width: 90%; margin: 20px 0; }
+        h1 { color: var(--color-primari); font-size: 2.5rem; margin-bottom: 10px; }
+        
+        .recepta { background: var(--color-superficie-2); padding: 20px; border-radius: 20px; text-align: left; margin: 25px 0; border: 1px solid var(--color-vora-subtil); }
+        
+        /* SEGURETAT */
+        .seguretat-container { margin-bottom: 25px; display: flex; flex-direction: column; gap: 20px; align-items: center; }
+        .check-edat { display: flex; align-items: center; gap: 15px; color: #ccc; font-size: 1.1rem; cursor: pointer; }
+        .check-edat input[type="checkbox"] { transform: scale(2.5); cursor: pointer; accent-color: var(--color-primari); margin-right: 5px; }     
+        .captcha-wrapper { display: flex; align-items: center; gap: 15px; background: var(--color-superficie-2); padding: 10px 20px; border-radius: 15px; border: 1px dashed #555; }
+        .captcha-text { font-family: monospace; font-weight: bold; font-size: 1.6rem; color: var(--color-primari); letter-spacing: 4px; }
+        
+        .captcha-input { background: transparent; border: 2px solid #444; color: white; width: 80px; padding: 10px; border-radius: 8px; text-align: center; outline: none; font-size: 1.2rem; text-transform: uppercase; }
+        .captcha-input:focus { border-color: var(--color-primari); }
+
+        .btn-prep { width: 100%; padding: 20px; background: var(--color-primari); color: white; border: none; border-radius: 20px; font-weight: bold; font-size: 1.2rem; cursor: pointer; box-shadow: 0 0 20px rgba(123, 97, 255, 0.3); transition: 0.3s; }
+        .btn-prep:disabled { background: #222; color: #555; cursor: not-allowed; box-shadow: none; opacity: 0.5; }
+    </style>
+</head>
+<body>
+    <a href="{{ origen }}" class="btn-back">← TORNAR</a>
+    
+    <div class="box">
+        {% if coctel.Alcoholic == 1 %}
+            <span class="badge-alcohol amb-alcohol">CONTÉ ALCOHOL 🔞</span>
+        {% else %}
+            <span class="badge-alcohol sense-alcohol">SENSE ALCOHOL ✨</span>
+        {% endif %}
+
+        <div style="font-size: 5rem;">🍹</div>
+        <h1>{{ coctel.Nom_Coctel }}</h1>
+        {% if coctel.frase_barman %}
+        <p style="color: #888; font-style: italic; margin: 0 0 20px 0;">"{{ coctel.frase_barman }}"</p>
+        {% endif %}
+        
+        <div class="recepta">
+            {% for ing in coctel.Recepta %}
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--color-vora-subtil);">
+                <span>{{ ing.Nom_Liquid }}</span>
+                <span style="color: var(--color-primari);">{{ ing.Quantitat_ml }}ml</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <form action="/preparar/{{ coctel.ID_Coctel }}" method="POST" id="confirm-form">
+            
+            {% if coctel.Alcoholic == 1 %}
+            <div class="seguretat-container">
+                <label class="check-edat">
+                    <input type="checkbox" id="edat" required onchange="validar()">
+                    Confirmo que soc major d'edat (+18)
+                </label>
+
+                <div class="captcha-wrapper" id="zona-captcha" style="display: none;">
+                    <span class="captcha-text" id="captcha-code">----</span>
+                    <input type="text" id="captcha-input" class="captcha-input" placeholder="Codi" maxlength="4" oninput="validar()">
+                </div>
+            </div>
+            {% endif %}
+
+            <button type="submit" id="btn-preparar" class="btn-prep" disabled>
+                {% if disponible %}PREPARAR ARA{% else %}SENSE ESTOC{% endif %}
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const esAlcoholic = {{ 'true' if coctel.Alcoholic == 1 else 'false' }};
+        const disponible = {{ 'true' if disponible else 'false' }};
+        let codiGenerated = "";
+
+        // Si és alcoholic, generem el captcha
+        if (esAlcoholic) {
+            codiGenerated = Math.random().toString(36).substring(2, 6).toUpperCase();
+            document.getElementById('captcha-code').innerText = codiGenerated;
+        }
+
+        function validar() {
+            const btn = document.getElementById('btn-preparar');
+            
+            if (!disponible) {
+                btn.disabled = true;
+                return;
+            }
+
+            if (esAlcoholic) {
+                const isChecked = document.getElementById('edat').checked;
+                const zonaCaptcha = document.getElementById('zona-captcha');
+                
+                // Mostrem el captcha només si ha marcat que és major d'edat
+                if (isChecked) {
+                    zonaCaptcha.style.display = 'flex';
+                } else {
+                    zonaCaptcha.style.display = 'none';
+                    document.getElementById('captcha-input').value = ''; // Buidem l'input si desmarca la casella
+                }
+
+                const inputVal = document.getElementById('captcha-input').value.toUpperCase();
+                btn.disabled = !(isChecked && inputVal === codiGenerated);
+            } else {
+                // Si no és alcoholic, el botó s'habilita sol (si hi ha estoc)
+                btn.disabled = false;
+            }
+        }
+
+        // Executar al carregar per si no és alcoholic
+        window.onload = validar;
+    </script>
+</body>
+</html>
+

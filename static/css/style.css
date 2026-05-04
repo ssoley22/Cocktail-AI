@@ -111,6 +111,22 @@ body {
     box-shadow: 0 3px 15px var(--ombra-primari-suau);
 }
 
+.container {
+    background: var(--color-superficie); 
+    padding: 40px;
+    border-radius: 30px;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+    margin: auto; 
+    
+    border: 2px dashed var(--color-primari-suau);
+    width: 90%;
+    max-width: 550px; /* Evita que creixi infinitament */
+    box-shadow: 0 5px 40px var(--ombra-primari-suau);
+}
+
 h1 {
     color: var(--color-primari);
 }

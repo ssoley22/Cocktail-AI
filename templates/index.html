@@ -86,6 +86,15 @@
             line-height: 1.4;
         }
 
+        .boto-text {
+            display: flex;
+            flex-direction: column;
+            align-items: inherit;
+            justify-content: center;
+            gap: 3px;
+            text-align: inherit;
+        }
+
         /* Botó destacat: Només sobreescriu allò que canvia, i la resta ho hereta */
         .boto.destacat {
             border-color: var(--color-primari);
@@ -110,6 +119,74 @@
             color: var(--color-primari);
         }
 
+        @media (max-width: 600px) {
+            .top-bar {
+                margin-bottom: 4px;
+            }
+
+            .capçalera {
+                margin-bottom: 14px;
+            }
+
+            h1 {
+                font-size: 2.2rem;
+            }
+
+            .separador {
+                margin-bottom: 20px;
+            }
+
+            .separador-text {
+                letter-spacing: 2px;
+                font-size: 0.75rem;
+            }
+
+            .cuadricula-botons {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+
+            .boto {
+                flex-direction: row;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 16px;
+                padding: 18px;
+                border-radius: 18px;
+                min-height: 88px;
+            }
+
+            .boto-icona {
+                width: 64px;
+                height: 64px;
+                font-size: 1.8rem;
+                flex-shrink: 0;
+            }
+
+            .boto-nom {
+                font-size: 1.2rem;
+                font-weight: 800;
+                text-align: left;
+            }
+
+            .boto-desc {
+                font-size: 0.9rem;
+                text-align: left;
+            }
+
+            .boto-text {
+                flex: 1;
+                min-width: 0;
+                align-items: flex-start;
+                text-align: left;
+            }
+
+            .badge-ia {
+                top: 10px;
+                right: 10px;
+            }
+        }
+
     </style>
 </head>
 
@@ -131,28 +208,36 @@
         <div class="cuadricula-botons">
             <a href="/manual" class="boto">
                 <div class="boto-icona">📖</div>
-                <div class="boto-nom">Manual</div>
-                <div class="boto-desc">Tria del catàleg complet</div>
+                <div class="boto-text">
+                    <div class="boto-nom">Manual</div>
+                    <div class="boto-desc">Tria del catàleg complet</div>
+                </div>
             </a>
 
             <a href="/aleatori" class="boto">
                 <div class="boto-icona">🎲</div>
-                <div class="boto-nom">Aleatori</div>
-                <div class="boto-desc">Deixa't sorprendre</div>
+                <div class="boto-text">
+                    <div class="boto-nom">Aleatori</div>
+                    <div class="boto-desc">Deixa't sorprendre</div>
+                </div>
             </a>
 
             <a href="/emocions" class="boto">
                 <div class="badge-ia suau">IA</div>
                 <div class="boto-icona">😊</div>
-                <div class="boto-nom">Emocions</div>
-                <div class="boto-desc">La IA tria pel teu humor</div>
+                <div class="boto-text">
+                    <div class="boto-nom">Emocions</div>
+                    <div class="boto-desc">La IA tria pel teu humor</div>
+                </div>
             </a>
 
             <a href="/xat" class="boto destacat">
                 <div class="badge-ia">IA</div>
                 <div class="boto-icona">🤖</div>
-                <div class="boto-nom">Xat</div>
-                <div class="boto-desc">Xateja i explica'm que vols</div>
+                <div class="boto-text">
+                    <div class="boto-nom">Xat</div>
+                    <div class="boto-desc">Xateja i explica'm que vols</div>
+                </div>
             </a>
 
         </div>

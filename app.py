@@ -268,6 +268,13 @@ def guardar_carril():
         return redirect(url_for('admin'))
 
     database.update_muntatge(pos, ing_id, quantitat)
+
+    # Recalculem preus després de tocar un carril per mantenir el motor financer al dia
+    try:
+        database.recalcular_preus()
+    except Exception as e:
+        print(f"Error recalculant preus: {e}")
+
     return redirect(url_for('admin'))
 
 @app.route('/logout')

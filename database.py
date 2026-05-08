@@ -1,5 +1,6 @@
 import sqlite3
 import os
+from decimal import Decimal, ROUND_HALF_UP
 
 RUTA_DB = os.path.join(os.path.dirname(__file__), "database.db")
 
@@ -19,7 +20,8 @@ def get_ingredients():
 def get_muntatge():
     connexio = connectar()
     llistat = connexio.execute("""
-        SELECT m.Posicio, m.ID_Ingredient, i.Nom_Liquid, i.Categoria, i.Te_Alcohol, m.Capacitat_Actual_ml
+        SELECT m.Posicio, m.ID_Ingredient, i.Nom_Liquid, i.Categoria, i.Te_Alcohol,
+               m.Capacitat_Actual_ml, m.Preu_Ampolla_Cents, m.Mida_Ampolla_ml
         FROM Muntatge m
         JOIN Ingredients i ON m.ID_Ingredient = i.ID_Ingredient
         ORDER BY m.Posicio
@@ -100,6 +102,97 @@ def update_muntatge(posicio, id_ingredient, capacitat):
                         WHERE Posicio = ?""", (capacitat, id_ingredient, posicio))
     connexio.commit()
     connexio.close()
+
+def round_half_up(valor: Decimal) -> int:
+    return int(valor.quantize(Decimal('1'), rounding=ROUND_HALF_UP))
+
+def arrodoniment_psicologic_cents(preu_cents):
+    if preu_cents <= 0:
+        return 0
+
+    euros = preu_cents // 100
+    centims = preu_cents % 100
+
+    if centims <= 24:
+        centims_final = 0
+    elif centims <= 74:
+        centims_final = 50
+    else:
+        centims_final = 95
+
+    return euros * 100 + centims_final
+
+def calcular_cost_ingredient_cents(preu_ampolla_cents, mida_ampolla_ml, quantitat_ml):
+    if mida_ampolla_ml <= 0 or preu_ampolla_cents < 0 or quantitat_ml <= 0:
+        return 0
+
+    cost_per_ml = Decimal(preu_ampolla_cents) / Decimal(mida_ampolla_ml)
+    cost_ingredient = Decimal(quantitat_ml) * cost_per_ml
+    return round_half_up(cost_ingredient)
+
+def recalcular_preus():
+    connexio = connectar()
+    try:
+        # Transacció única per evitar valors inconsistents si hi ha un error
+        marge_row = connexio.execute(
+            "SELECT Valor FROM Configuracio WHERE Clau = 'MARGE_BENEFICI'"
+        ).fetchone()
+
+        try:
+            marge_benefici = Decimal(marge_row['Valor']) if marge_row else Decimal('3.0')
+        except Exception:
+            marge_benefici = Decimal('3.0')
+
+        costos_categoria = {}
+        files_muntatge = connexio.execute("""
+            SELECT i.Categoria, m.Preu_Ampolla_Cents, m.Mida_Ampolla_ml
+            FROM Muntatge m
+            JOIN Ingredients i ON i.ID_Ingredient = m.ID_Ingredient
+        """).fetchall()
+
+        for fila in files_muntatge:
+            costos_categoria[fila['Categoria']] = {
+                'preu_ampolla_cents': fila['Preu_Ampolla_Cents'],
+                'mida_ampolla_ml': fila['Mida_Ampolla_ml']
+            }
+
+        coctels = connexio.execute("SELECT ID_Coctel FROM Coctels").fetchall()
+
+        for coctel in coctels:
+            id_coctel = coctel['ID_Coctel']
+            recepta = connexio.execute(
+                "SELECT Categoria, Quantitat_ml FROM Receptes WHERE ID_Coctel = ?",
+                (id_coctel,)
+            ).fetchall()
+
+            cost_total = 0
+            for ingredient in recepta:
+                dades_categoria = costos_categoria.get(ingredient['Categoria'])
+                if not dades_categoria:
+                    continue
+
+                cost_total += calcular_cost_ingredient_cents(
+                    dades_categoria['preu_ampolla_cents'],
+                    dades_categoria['mida_ampolla_ml'],
+                    ingredient['Quantitat_ml']
+                )
+
+            preu_cru = round_half_up(Decimal(cost_total) * marge_benefici)
+            preu_calculat = arrodoniment_psicologic_cents(preu_cru)
+
+            connexio.execute("""
+                UPDATE Coctels
+                SET Preu_Produccio_Cents = ?,
+                    Preu_Calculat_Cents = ?
+                WHERE ID_Coctel = ?
+            """, (cost_total, preu_calculat, id_coctel))
+
+        connexio.commit()
+    except Exception:
+        connexio.rollback()
+        raise
+    finally:
+        connexio.close()
 
 def restar_estoc(id_coctel):
     coctel = get_coctel(id_coctel)

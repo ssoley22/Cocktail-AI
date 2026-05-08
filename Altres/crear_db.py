@@ -24,7 +24,11 @@ def crear_database():
         CREATE TABLE Coctels (
             ID_Coctel  INTEGER PRIMARY KEY AUTOINCREMENT,
             Nom_Coctel TEXT NOT NULL,
-            Descripcio TEXT
+            Descripcio TEXT,
+            Preu_Produccio_Cents INTEGER NOT NULL DEFAULT 0,
+            Preu_Calculat_Cents INTEGER NOT NULL DEFAULT 0,
+            Preu_Fix_Cents INTEGER,
+            Te_Preu_Fix INTEGER NOT NULL DEFAULT 0
         );
 
         CREATE TABLE Receptes (
@@ -39,7 +43,14 @@ def crear_database():
             Posicio             INTEGER PRIMARY KEY CHECK (Posicio BETWEEN 1 AND 6),
             ID_Ingredient       INTEGER NOT NULL,
             Capacitat_Actual_ml INTEGER NOT NULL DEFAULT 0,
+            Preu_Ampolla_Cents  INTEGER NOT NULL DEFAULT 0,
+            Mida_Ampolla_ml     INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (ID_Ingredient) REFERENCES Ingredients(ID_Ingredient)
+        );
+
+        CREATE TABLE Configuracio (
+            Clau TEXT PRIMARY KEY,
+            Valor TEXT NOT NULL
         );
 
         CREATE TABLE Comandes (
@@ -247,16 +258,21 @@ def crear_database():
     # 5. INSERIR MUNTATGE INICIAL (6 carrils)
     # ==========================================
     muntatge = [
-        (1, 18, 1000),  # Brugal (Rom)
-        (2, 7,  1000),  # Absolut Vodka
-        (3, 12, 1000),  # Seagram's (Ginebra)
-        (4, 43, 1000),  # Suc de taronja
-        (5, 49, 1000),  # Granadina
-        (6, 35, 1000),  # Fanta de llimona
+        (1, 18, 1000, 1500, 700),  # Brugal (Rom)
+        (2, 7,  1000, 1500, 700),  # Absolut Vodka
+        (3, 12, 1000, 1500, 700),  # Seagram's (Ginebra)
+        (4, 43, 1000, 1500, 700),  # Suc de taronja
+        (5, 49, 1000, 1500, 700),  # Granadina
+        (6, 35, 1000, 1500, 700),  # Fanta de llimona
     ]
     conn.executemany(
-        "INSERT INTO Muntatge (Posicio, ID_Ingredient, Capacitat_Actual_ml) VALUES (?, ?, ?)",
+        "INSERT INTO Muntatge (Posicio, ID_Ingredient, Capacitat_Actual_ml, Preu_Ampolla_Cents, Mida_Ampolla_ml) VALUES (?, ?, ?, ?, ?)",
         muntatge
+    )
+
+    conn.execute(
+        "INSERT INTO Configuracio (Clau, Valor) VALUES (?, ?)",
+        ('MARGE_BENEFICI', '3.0')
     )
 
     conn.commit()

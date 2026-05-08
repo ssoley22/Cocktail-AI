@@ -5,6 +5,8 @@ RUTA_DB = os.path.join(os.path.dirname(__file__), "database.db")
 
 def connectar():
     connexio = sqlite3.connect(RUTA_DB)
+    # Activa WAL per reduir bloquejos en lectures/escriptures simultànies
+    connexio.execute('PRAGMA journal_mode=WAL;')
     connexio.row_factory = sqlite3.Row
     return connexio
 

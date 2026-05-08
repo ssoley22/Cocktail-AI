@@ -185,25 +185,44 @@
         function appendCoctelCard(dades) {
             const card = document.createElement('div');
             card.className = "targeta-ia";
-            
-            let ingredientsHTML = '<div class="caixa-ingredients-ia">';
+
+            // Protecció: usem textContent per evitar que HTML de la IA trenqui la interfície
+            const titol = document.createElement('h3');
+            titol.textContent = `🍹 ${dades.nom || 'Còctel IA'}`;
+
+            const descripcio = document.createElement('p');
+            descripcio.textContent = dades.descripcio || 'Fórmula única generada en temps real per la nostra IA.';
+
+            const ingredientsBox = document.createElement('div');
+            ingredientsBox.className = 'caixa-ingredients-ia';
+
             if (dades.recepta) {
                 for (const [liquid, ml] of Object.entries(dades.recepta)) {
-                    ingredientsHTML += `
-                    <div class="ing-ia-item">
-                        <span>${liquid}</span>
-                        <span class="ing-ia-ml">${ml}ml</span>
-                    </div>`;
+                    const fila = document.createElement('div');
+                    fila.className = 'ing-ia-item';
+
+                    const nomLiquid = document.createElement('span');
+                    nomLiquid.textContent = liquid;
+
+                    const quantitat = document.createElement('span');
+                    quantitat.className = 'ing-ia-ml';
+                    quantitat.textContent = `${ml}ml`;
+
+                    fila.appendChild(nomLiquid);
+                    fila.appendChild(quantitat);
+                    ingredientsBox.appendChild(fila);
                 }
             }
-            ingredientsHTML += '</div>';
 
-            card.innerHTML = `
-                <h3>🍹 ${dades.nom}</h3>
-                <p>${dades.descripcio || 'Fórmula única generada en temps real per la nostra IA.'}</p>
-                ${ingredientsHTML}
-                <a href="/confirmacio_ia" class="btn-preparar-ia">PREPARAR AQUEST CÒCTEL</a>
-            `;
+            const botoPreparar = document.createElement('a');
+            botoPreparar.href = '/confirmacio_ia';
+            botoPreparar.className = 'btn-preparar-ia';
+            botoPreparar.textContent = 'PREPARAR AQUEST CÒCTEL';
+
+            card.appendChild(titol);
+            card.appendChild(descripcio);
+            card.appendChild(ingredientsBox);
+            card.appendChild(botoPreparar);
             chatBox.appendChild(card);
             scrollDown();
         }

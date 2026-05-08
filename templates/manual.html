@@ -219,6 +219,7 @@
     <script>
         window.nomesDisponibles = false;
         window.filtreAlcohol = 'tots';
+        let debounceCerca;
 
         function aplicarFiltres() {
             const textCerca = document.getElementById('cercador').value.toLowerCase();
@@ -261,8 +262,11 @@
             aplicarFiltres();
         }
 
-        // Executem la cerca cada cop que escriuen una lletra
-        document.getElementById('cercador').addEventListener('input', aplicarFiltres);
+        // Debounce: evitem recalcular filtres a cada tecla per millorar fluïdesa
+        document.getElementById('cercador').addEventListener('input', function() {
+            clearTimeout(debounceCerca);
+            debounceCerca = setTimeout(aplicarFiltres, 300);
+        });
     </script>
 </body>
 </html>

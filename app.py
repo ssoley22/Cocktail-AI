@@ -174,6 +174,10 @@ def xat():
 
 @app.route('/api/generar_xat', methods=['POST'])
 def generar_xat():
+    # Protecció: si la petició no porta JSON, evitem errors de processament
+    if not request.json:
+        return jsonify({"status": "error", "missatge": "Petició buida"}), 400
+
     if 'historial' not in session:
         session['historial'] = []
     
@@ -254,9 +258,15 @@ def admin():
 def guardar_carril():
     if not session.get('admin_loguejat'):
         return redirect(url_for('login'))
-    pos = int(request.form.get('posicio'))
-    ing_id = int(request.form.get('id_ingredient'))
-    quantitat = int(request.form.get('ml'))
+
+    # Protecció: evitem un error 500 si arriben valors malformats al formulari
+    try:
+        pos = int(request.form.get('posicio'))
+        ing_id = int(request.form.get('id_ingredient'))
+        quantitat = int(request.form.get('ml'))
+    except (TypeError, ValueError):
+        return redirect(url_for('admin'))
+
     database.update_muntatge(pos, ing_id, quantitat)
     return redirect(url_for('admin'))
 

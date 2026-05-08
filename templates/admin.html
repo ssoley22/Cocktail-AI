@@ -1,4 +1,4 @@
-<!DOCTYPE html>             
+<!DOCTYPE html>              
 <html lang="ca">         
 <head>                       
     <meta charset="UTF-8">  
@@ -8,14 +8,14 @@
     <style>
         .admin-wrapper {
             width: 100%;
-            max-width: 1000px; 
+            max-width: 1200px;
             padding: 20px;
         }
 
-        /* --- CAPÇALERA ADMIN (Ara amb Grid per centrar-ho perfecte) --- */
+        /* --- CAPÇALERA ADMIN --- */
         .admin-header {
             display: grid;
-            grid-template-columns: 1fr auto 1fr; /* Esquerra (1 part), Centre (Automàtic), Dreta (1 part) */
+            grid-template-columns: 1fr auto 1fr;
             align-items: center;
             width: 100%;
             margin-bottom: 40px;
@@ -23,8 +23,6 @@
 
         .header-esquerra { display: flex; justify-content: flex-start; }
         .header-dreta { display: flex; justify-content: flex-end; }
-
-        /* Anul·lem l'efecte del style.css global només per a aquest botó */
         .admin-header .tornar-btn { margin-right: 0; }
 
         .btn-sortir {
@@ -90,6 +88,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed; 
         }
 
         th {
@@ -97,18 +96,22 @@
             text-transform: uppercase;
             font-size: 0.85rem;
             letter-spacing: 1px;
-            padding: 15px;
+            padding: 15px 10px;
             border-bottom: 2px solid var(--color-vora);
             text-align: center;
         }
 
         td {
-            padding: 15px;
+            padding: 15px 10px;
             border-bottom: 1px solid var(--color-vora-subtil);
             text-align: center;
+            vertical-align: middle;
+            word-wrap: break-word;
         }
 
-        /* Elements de Formularis (Selects i Inputs) */
+        .text-nowrap { white-space: nowrap; }
+
+        /* Elements de Formularis */
         input[type="text"], input[type="number"], select {
             background: var(--color-superficie-2);
             color: var(--color-text);
@@ -118,11 +121,15 @@
             font-size: 0.95rem;
             outline: none;
             transition: 0.3s;
+            box-sizing: border-box;
         }
 
         input[type="text"]:focus, input[type="number"]:focus, select:focus {
             border-color: var(--color-primari);
         }
+
+        /* Ocupar 100% només al selector de líquid perquè el text no quedi tallat */
+        td select { width: 100%; }
 
         .btn-desar {
             background: var(--color-primari);
@@ -133,6 +140,10 @@
             font-weight: bold;
             cursor: pointer;
             transition: 0.3s;
+            /* Mides fixes perquè siguin exactament iguals a tot arreu */
+            min-width: 110px;
+            width: auto;
+            display: inline-block;
         }
 
         .btn-desar:hover { background: var(--color-primari-clar); }
@@ -186,13 +197,19 @@
             padding: 5px;
         }
 
-        /* Badges i Estats de la Llista de Receptes */
-        .badge-alcohol { background: var(--color-enfadat-difuminat); color: var(--color-error); padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; border: 1px solid var(--color-error); }
-        .badge-sense { background: var(--color-alegria-difuminat); color: var(--color-alegria); padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; border: 1px solid var(--color-alegria); }
-        
+        /* Badges i Estats */
         .disponible { color: var(--color-ok, #4caf50); font-weight: bold; }
         .no-disponible { color: var(--color-error); font-weight: bold; opacity: 0.8; }
         tr.offline { opacity: 0.5; }
+
+        /* Contenidor Preu Manual (Checkbox animat a l'esquerra de l'input) */
+        .manual-price-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px; /* Separació entre el check i l'input */
+            min-height: 45px;
+        }
 
     </style>
 </head>
@@ -224,29 +241,36 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>POS</th>
-                                <th>LÍQUID ACTUAL</th>
-                                <th>ESTOC (ML)</th>
-                                <th>ACCIÓ</th>
+                                <th style="width: 8%;">POS</th>
+                                <th style="width: 25%; text-align: left;">LÍQUID ACTUAL</th>
+                                <th style="width: 17%;">PREU AMPOLLA (€)</th>
+                                <th style="width: 15%;">MIDA (ML)</th>
+                                <th style="width: 15%;">ESTOC (ML)</th>
+                                <th style="width: 20%;">ACCIÓ</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for fila in carrils %}
                             <tr>
-                                <form action="/guardar_carril" method="POST">
-                                    <td><strong>{{ fila.Posicio }}</strong><input type="hidden" name="posicio" value="{{ fila.Posicio }}"></td>
-                                    <td>
-                                        <select name="id_ingredient">
-                                            {% for ing in liquids %}
-                                            <option value="{{ ing.ID_Ingredient }}" {% if ing.ID_Ingredient == fila.ID_Ingredient %}selected{% endif %}>
-                                                {{ ing.Nom_Liquid }}
-                                            </option>
-                                            {% endfor %}
-                                        </select>
-                                    </td>
-                                    <td><input type="number" name="ml" value="{{ fila.Capacitat_Actual_ml }}" style="width: 100px;"></td>
-                                    <td><button type="submit" class="btn-desar">DESAR</button></td>
-                                </form>
+                                <td><strong>{{ fila.Posicio }}</strong></td>
+                                <td style="text-align: left;">
+                                    <select name="id_ingredient" form="form_carril_{{ fila.Posicio }}">
+                                        {% for ing in liquids %}
+                                        <option value="{{ ing.ID_Ingredient }}" {% if ing.ID_Ingredient == fila.ID_Ingredient %}selected{% endif %}>
+                                            {{ ing.Nom_Liquid }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td><input type="number" name="preu_ampolla_eur" form="form_carril_{{ fila.Posicio }}" step="0.01" min="0" value="{{ '%.2f'|format((fila.Preu_Ampolla_Cents or 0) / 100) }}" style="width: 100px; text-align: center; margin: 0 auto; display: block;"></td>
+                                <td><input type="number" name="mida_ampolla_ml" form="form_carril_{{ fila.Posicio }}" step="1" min="1" value="{{ fila.Mida_Ampolla_ml or 700 }}" style="width: 90px; text-align: center; margin: 0 auto; display: block;"></td>
+                                <td><input type="number" name="ml" form="form_carril_{{ fila.Posicio }}" value="{{ fila.Capacitat_Actual_ml }}" style="width: 90px; text-align: center; margin: 0 auto; display: block;"></td>
+                                <td>
+                                    <form id="form_carril_{{ fila.Posicio }}" action="/guardar_carril" method="POST">
+                                        <input type="hidden" name="posicio" value="{{ fila.Posicio }}">
+                                        <button type="submit" class="btn-desar">DESAR</button>
+                                    </form>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -255,16 +279,17 @@
             </div>
 
             <div id="seccio-receptes" class="contingut-seccio" style="display: none;">
-                
-                <div class="taula-wrapper form-crear">
+                <div style="text-align: center; margin-bottom: 16px;">
+                    <button type="button" class="btn-add" onclick="toggleFormNouCoctel()" id="btn-toggle-form">+ Afegir Nou Còctel</button>
+                </div>
+
+                <div class="taula-wrapper form-crear" id="bloc-form-nou-coctel" style="display: none;">
                     <h3 style="color: var(--color-primari); margin-bottom: 20px;">🆕 Crear Nova Recepta Manual</h3>
                     
                     <form action="/guardar_recepta_manual" method="POST" id="form-nova-recepta">
-                        
                         <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap;">
                             <input type="text" name="nom_coctel" placeholder="Nom del Còctel" required style="width: 250px;">
                             <input type="text" name="frase_barman" placeholder="Frase personalitzada..." style="width: 300px;">
-                            
                             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--color-text-subtil);">
                                 <input type="checkbox" name="alcoholic" value="1" style="width: 20px; height: 20px; accent-color: var(--color-primari);"> 
                                 +18 Alcohòlic
@@ -295,10 +320,12 @@
                     <table>
                         <thead>
                             <tr>
-                                <th style="text-align: left;">Estat</th>
-                                <th style="text-align: left;">Nom del Còctel</th>
-                                <th>Tipus</th>
-                                <th>ID</th>
+                                <th style="width: 15%; text-align: left;">Estat</th>
+                                <th style="width: 22%; text-align: left;">Nom del Còctel</th>
+                                <th style="width: 12%;">Cost</th>
+                                <th style="width: 15%;">Preu Suggerit</th>
+                                <th style="width: 22%;">Preu Manual</th>
+                                <th style="width: 14%;">Acció</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -312,14 +339,30 @@
                                     {% endif %}
                                 </td>
                                 <td style="text-align: left; font-weight: bold;">{{ c.Nom_Coctel }}</td>
-                                <td>
-                                    {% if c.Alcoholic == 1 %}
-                                        <span class="badge-alcohol">AMB ALCOHOL</span>
-                                    {% else %}
-                                        <span class="badge-sense">SENSE ALCOHOL</span>
-                                    {% endif %}
+
+                                <td class="text-nowrap" style="font-weight: bold; color: var(--color-text-subtil);">
+                                    {{ ('%.2f'|format((c.Preu_Produccio_Cents or 0) / 100))|replace('.', ',') }} €
                                 </td>
-                                <td style="color: var(--color-text-subtil);">#{{ c.ID_Coctel }}</td>
+                                <td class="text-nowrap" style="font-weight: bold; color: var(--color-primari); font-size: 1.1rem;">
+                                    {{ ('%.2f'|format((c.Preu_Calculat_Cents or 0) / 100))|replace('.', ',') }} €
+                                </td>
+
+                                <td>
+                                    <div class="manual-price-wrapper">
+                                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--color-text-subtil); font-weight: bold; font-size: 0.85rem;" title="Fixar preu manual">
+                                            <input type="checkbox" name="te_preu_fix" form="form_fix_{{ c.ID_Coctel }}" onchange="togglePreuInput({{ c.ID_Coctel }})" {% if c.Te_Preu_Fix == 1 %}checked{% endif %} style="width: 22px; height: 22px; accent-color: var(--color-primari);">
+                                            FIX
+                                        </label>
+                                        <input type="number" id="input_preu_{{ c.ID_Coctel }}" name="preu_fix_eur" form="form_fix_{{ c.ID_Coctel }}" step="0.01" min="0" value="{{ '%.2f'|format((c.Preu_Fix_Cents or 0) / 100) if c.Preu_Fix_Cents is not none else '' }}" placeholder="Ex: 5.00" style="width: 110px; text-align: center; display: {% if c.Te_Preu_Fix == 1 %}block{% else %}none{% endif %};">
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <form id="form_fix_{{ c.ID_Coctel }}" action="/guardar_preu_fix" method="POST">
+                                        <input type="hidden" name="id_coctel" value="{{ c.ID_Coctel }}">
+                                        <button type="submit" class="btn-desar">DESAR</button>
+                                    </form>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -332,8 +375,8 @@
                     <table>
                         <thead>
                             <tr>
-                                <th style="text-align: left; padding-left: 40px;">Nom del Còctel</th>
-                                <th>Total de Vendes</th>
+                                <th style="width: 70%; text-align: left; padding-left: 40px;">Nom del Còctel</th>
+                                <th style="width: 30%;">Total de Vendes</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -384,6 +427,85 @@
                 alert("Un còctel ha de tenir almenys un ingredient!");
             }
         }
+
+        function toggleFormNouCoctel() {
+            const bloc = document.getElementById('bloc-form-nou-coctel');
+            const boto = document.getElementById('btn-toggle-form');
+            const obert = bloc.style.display === 'block';
+            bloc.style.display = obert ? 'none' : 'block';
+            boto.textContent = obert ? '+ Afegir Nou Còctel' : '− Amagar Formulari';
+        }
+
+        function togglePreuInput(id) {
+            const checkbox = document.querySelector(`input[form="form_fix_${id}"][type="checkbox"]`);
+            const input = document.getElementById(`input_preu_${id}`);
+            if (checkbox.checked) {
+                input.style.display = 'block';
+                input.focus(); // Autoselecciona perquè puguis escriure ràpid
+            } else {
+                input.style.display = 'none';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const formularis = document.querySelectorAll('form[id^="form_carril_"], form[id^="form_fix_"]');
+
+            formularis.forEach(form => {
+                form.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+
+                    const botoSubmit = form.querySelector('button[type="submit"], input[type="submit"]');
+                    if (!botoSubmit) return;
+
+                    const textOriginal = botoSubmit.textContent;
+                    const fonsOriginal = botoSubmit.style.backgroundColor;
+                    const colorOriginal = botoSubmit.style.color;
+                    const deshabilitatOriginal = botoSubmit.disabled;
+
+                    const dades = new FormData(form);
+
+                    try {
+                        botoSubmit.disabled = true;
+
+                        const resposta = await fetch(form.action, {
+                            method: form.method || 'POST',
+                            body: dades,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        const json = await resposta.json();
+
+                        if (resposta.ok && json.status === 'ok') {
+                            botoSubmit.textContent = 'DESAT ✅';
+                            botoSubmit.style.backgroundColor = 'var(--color-ok, #4caf50)';
+                            botoSubmit.style.color = '#fff';
+
+                            setTimeout(() => {
+                                botoSubmit.textContent = textOriginal;
+                                botoSubmit.style.backgroundColor = fonsOriginal;
+                                botoSubmit.style.color = colorOriginal;
+                                botoSubmit.disabled = deshabilitatOriginal;
+                            }, 2000);
+                        } else {
+                            botoSubmit.textContent = 'ERROR';
+                            setTimeout(() => {
+                                botoSubmit.textContent = textOriginal;
+                                botoSubmit.disabled = deshabilitatOriginal;
+                            }, 2000);
+                        }
+                    } catch (err) {
+                        botoSubmit.textContent = 'ERROR';
+                        setTimeout(() => {
+                            botoSubmit.textContent = textOriginal;
+                            botoSubmit.disabled = deshabilitatOriginal;
+                        }, 2000);
+                    }
+                });
+            });
+        });
     </script>
 </body>
 </html>

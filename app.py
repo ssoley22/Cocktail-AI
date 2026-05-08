@@ -259,21 +259,78 @@ def guardar_carril():
     if not session.get('admin_loguejat'):
         return redirect(url_for('login'))
 
+    es_ajax = (
+        request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        or "application/json" in request.headers.get("Accept", "")
+    )
+
     # Protecció: evitem un error 500 si arriben valors malformats al formulari
     try:
         pos = int(request.form.get('posicio'))
         ing_id = int(request.form.get('id_ingredient'))
         quantitat = int(request.form.get('ml'))
+        preu_ampolla_cents = int(round(float(request.form.get('preu_ampolla_eur')) * 100))
+        mida_ampolla_ml = int(request.form.get('mida_ampolla_ml'))
     except (TypeError, ValueError):
+        if es_ajax:
+            return jsonify({"status": "error", "message": "Dades invàlides"}), 400
         return redirect(url_for('admin'))
 
-    database.update_muntatge(pos, ing_id, quantitat)
-
-    # Recalculem preus després de tocar un carril per mantenir el motor financer al dia
     try:
+        database.update_muntatge(pos, ing_id, quantitat, preu_ampolla_cents, mida_ampolla_ml)
+
+        # Recalculem preus després de tocar un carril per mantenir el motor financer al dia
         database.recalcular_preus()
     except Exception as e:
         print(f"Error recalculant preus: {e}")
+        if es_ajax:
+            return jsonify({"status": "error", "message": "Error intern"}), 500
+        return redirect(url_for('admin'))
+
+    if es_ajax:
+        return jsonify({"status": "ok", "message": "Desat"})
+
+    return redirect(url_for('admin'))
+
+@app.route('/guardar_preu_fix', methods=['POST'])
+def guardar_preu_fix():
+    if not session.get('admin_loguejat'):
+        return redirect(url_for('login'))
+
+    es_ajax = (
+        request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        or "application/json" in request.headers.get("Accept", "")
+    )
+
+    try:
+        id_coctel = int(request.form.get('id_coctel'))
+        te_preu_fix = 1 if request.form.get('te_preu_fix') == 'on' else 0
+        valor_preu_fix = (request.form.get('preu_fix_eur') or '').strip()
+    except (TypeError, ValueError):
+        if es_ajax:
+            return jsonify({"status": "error", "message": "Dades invàlides"}), 400
+        return redirect(url_for('admin'))
+
+    preu_fix_cents = None
+    if valor_preu_fix:
+        try:
+            preu_fix_cents = int(round(float(valor_preu_fix) * 100))
+        except (TypeError, ValueError):
+            te_preu_fix = 0
+            preu_fix_cents = None
+
+    if te_preu_fix == 1 and (preu_fix_cents is None or preu_fix_cents <= 0):
+        te_preu_fix = 0
+
+    try:
+        database.update_preu_fix_coctel(id_coctel, te_preu_fix, preu_fix_cents)
+    except Exception:
+        if es_ajax:
+            return jsonify({"status": "error", "message": "Error intern"}), 500
+        return redirect(url_for('admin'))
+
+    if es_ajax:
+        return jsonify({"status": "ok", "message": "Desat"})
 
     return redirect(url_for('admin'))
 

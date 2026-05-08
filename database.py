@@ -86,6 +86,11 @@ def get_tots_els_coctels():
     connexio = connectar()
     llistat = connexio.execute("""
         SELECT c.*,
+        CASE
+            WHEN c.Te_Preu_Fix = 1 AND c.Preu_Fix_Cents IS NOT NULL AND c.Preu_Fix_Cents > 0
+                THEN c.Preu_Fix_Cents
+            ELSE c.Preu_Calculat_Cents
+        END as Preu_Final_Cents,
         (SELECT MAX(i.Te_Alcohol)
          FROM Receptes r
          JOIN Ingredients i ON i.Categoria = r.Categoria
@@ -95,11 +100,25 @@ def get_tots_els_coctels():
     connexio.close()
     return [dict(fila) for fila in llistat]
 
-def update_muntatge(posicio, id_ingredient, capacitat):
+def update_muntatge(posicio, id_ingredient, capacitat, preu_ampolla_cents, mida_ampolla_ml):
     connexio = connectar()
     connexio.execute("""UPDATE Muntatge
-                        SET Capacitat_Actual_ml = ?, ID_Ingredient = ?
-                        WHERE Posicio = ?""", (capacitat, id_ingredient, posicio))
+                        SET Capacitat_Actual_ml = ?,
+                            ID_Ingredient = ?,
+                            Preu_Ampolla_Cents = ?,
+                            Mida_Ampolla_ml = ?
+                        WHERE Posicio = ?""", (capacitat, id_ingredient, preu_ampolla_cents, mida_ampolla_ml, posicio))
+    connexio.commit()
+    connexio.close()
+
+def update_preu_fix_coctel(id_coctel, te_preu_fix, preu_fix_cents):
+    connexio = connectar()
+    connexio.execute("""
+        UPDATE Coctels
+        SET Te_Preu_Fix = ?,
+            Preu_Fix_Cents = ?
+        WHERE ID_Coctel = ?
+    """, (te_preu_fix, preu_fix_cents, id_coctel))
     connexio.commit()
     connexio.close()
 

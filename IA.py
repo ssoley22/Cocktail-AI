@@ -49,7 +49,11 @@ def crida_ia_redundant(sys_prompt: str, user_prompt: str) -> dict | None:
             response_format={"type": "json_object"}  # Força JSON pur, sense text
         )
         net = resposta.choices[0].message.content.replace('```json', '').replace('```', '').strip()
-        return json.loads(net)
+        try:
+            return json.loads(net)
+        except Exception:
+            # Protecció: evitem crash si el proveïdor retorna JSON invàlid
+            return {"recepta": [], "nom": "Error", "descripcio": "Ho sento, no he pogut generar la recepta. Torna-ho a provar."}
     
     except Exception as e_groq:
         print(f"[IA WARNING] Falla Groq: {e_groq}. Saltant a OpenRouter...")
@@ -62,7 +66,11 @@ def crida_ia_redundant(sys_prompt: str, user_prompt: str) -> dict | None:
                 response_format={"type": "json_object"}
             )
             net_or = resposta_or.choices[0].message.content.replace('```json', '').replace('```', '').strip()
-            return json.loads(net_or)
+            try:
+                return json.loads(net_or)
+            except Exception:
+                # Protecció: evitem crash si el proveïdor retorna JSON invàlid
+                return {"recepta": [], "nom": "Error", "descripcio": "Ho sento, no he pogut generar la recepta. Torna-ho a provar."}
             
         except Exception as e_or:
             print(f"[IA FATAL ERROR] Han fallat els dos proveïdors. Error final: {e_or}")
@@ -85,7 +93,11 @@ def crida_ia_redundant_historial(sys_prompt: str, historial: list) -> dict | Non
             messages=missatges_full,
             response_format={"type": "json_object"},
         )
-        return json.loads(resposta.choices[0].message.content.strip())
+        try:
+            return json.loads(resposta.choices[0].message.content.strip())
+        except Exception:
+            # Protecció: evitem crash si el proveïdor retorna JSON invàlid
+            return {"recepta": [], "nom": "Error", "descripcio": "Ho sento, no he pogut generar la recepta. Torna-ho a provar."}
     
     except Exception as e:
         print(f"[IA WARNING] Error historial Groq: {e}. Provant OpenRouter...")
@@ -96,7 +108,11 @@ def crida_ia_redundant_historial(sys_prompt: str, historial: list) -> dict | Non
                 messages=missatges_full,
                 response_format={"type": "json_object"},
             )
-            return json.loads(resposta.choices[0].message.content.strip())
+            try:
+                return json.loads(resposta.choices[0].message.content.strip())
+            except Exception:
+                # Protecció: evitem crash si el proveïdor retorna JSON invàlid
+                return {"recepta": [], "nom": "Error", "descripcio": "Ho sento, no he pogut generar la recepta. Torna-ho a provar."}
         except Exception as e_or:
             print(f"[IA FATAL] Error total xat: {e_or}")
             return None

@@ -1,0 +1,137 @@
+@font-face {
+    font-family: 'Momo Signature';
+    src: url('../fonts/MomoSignature-Regular.ttf') format('truetype');
+}
+
+/* 1. DEFINICIÓ DE COLORS */
+:root {
+    --color-fons: #05050a;  
+    --color-superficie: #0d0e1a;
+    --color-superficie-2: #131420;  
+    --color-superficie-claret: #141629;
+    --color-primari: #7b61ff;  
+    --color-primari-clar: #8e77ff;
+    --color-primari-fosc: #6347d1;
+    --color-primari-suau: #7b61ffb2;
+    --color-vora: #212541;  
+    --color-text: #ebebeb; 
+    --color-text-subtil: #888888; 
+    --color-icona-bg: rgba(123, 97, 255, 0.1); 
+    --color-error: #ff4b4b;
+    
+    /* Variables de transparència/ombra */
+    --ombra-primari: rgba(97, 244, 255, 0.4);
+    --ombra-primari-suau: rgba(97, 218, 255, 0.2);
+
+    /* Colors d'emocions */
+    --color-alegria: #4caf50; 
+    --color-alegria-difuminat: rgba(76, 175, 80, 0.1); /* Versió més suau per a ombres o fons */
+    --color-tristesa: #2196f3; 
+    --color-tristesa-difuminat: rgba(33, 150, 243, 0.1);
+    --color-estres: #ff9800;  
+    --color-estres-difuminat: rgba(255, 152, 0, 0.1);
+    --color-enfadat: #f44336;  
+    --color-enfadat-difuminat: rgba(244, 67, 54, 0.1);
+}
+
+/* 2. RESET GLOBAL */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+
+    /* BLOQUEIG PER A MÀQUINA TÀCTIL */
+    user-select: none; /* Evita que la gent pugui seleccionar el text com si anés a fer copiar/enganxar */
+    -webkit-user-select: none; /* Mateixa regla per a Safari/iOS */
+    -webkit-user-drag: none; /* Evita que es puguin arrossegar icones o enllaços */
+}
+
+/* 3. BASE DEL COS */
+body {
+    background-color: var(--color-fons);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    line-height: 1.6;
+}
+
+.main-container {
+    display: flex; /* Serveix per alinear elements */
+    flex-direction: column; /* Alinea els elements verticalment */
+    align-items: center; /* Centra els elements horitzontalment */
+    min-height: 100dvh; /* Assegura que ocupi l'altura completa visible (dinàmica) */
+    padding: 10px; /* Marges */
+}
+
+.top-bar {
+    display: flex;
+    justify-content: flex-end; /* Això empeny tot el contingut cap a la dreta */
+    width: 100%;
+    padding: 10px 20px; /* Marge de 10px superior i 20px laterals */
+    margin-bottom: 10px;
+}
+
+.capçalera {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.boto {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    text-decoration: none;
+    background: var(--color-superficie);
+    border: 2px solid var(--color-vora);
+    border-radius: 25px;
+    padding: 35px 25px;
+    gap: 10px;
+    transition: 0.3s;
+    justify-content: center;
+}
+
+.cuadricula-botons {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Dues columnes de la mateixa mida */
+    gap: 20px;
+    width: 100%;
+    max-width: 550px; /* Alineat amb el separador */
+    padding: 0 10px;
+}
+
+.tornar-btn {
+    padding: 10px 30px;
+    background: var(--color-superficie);
+    border: 2px solid var(--color-vora);
+    border-radius: 25px;
+    color: var(--color-text);
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.3s;
+    margin-right: auto; /* Això empeny el botó cap a l'esquerra */
+}
+.tornar-btn:hover {
+    background: var(--color-superficie-claret);
+    border-color: var(--color-primari);
+    transform: scale(1.02);
+    box-shadow: 0 3px 15px var(--ombra-primari-suau);
+}
+
+.container {
+    background: var(--color-superficie); 
+    padding: 40px;
+    border-radius: 30px;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+    margin: auto; 
+    
+    border: 2px dashed var(--color-primari-suau);
+    width: 90%;
+    max-width: 550px; /* Evita que creixi infinitament */
+    box-shadow: 0 5px 40px var(--ombra-primari-suau);
+}
+
+h1 {
+    color: var(--color-primari);
+}

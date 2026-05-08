@@ -1,18 +1,91 @@
-<!DOCTYPE html>
-<html lang="ca">
-<head>
-    <meta charset="UTF-8">
-    <title>Error - Cocktail IA</title>
+<!DOCTYPE html>             
+<html lang="ca">         
+<head>                       
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/static/css/style.css"> 
+    <title>Cocktail IA - Error</title>   
     <style>
-        body { background: #05050a; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        h1 { color: #ff4b4b; }
-        a { color: #7b61ff; margin-top: 20px; }
+        /* Targeta d'error centrada */
+        .error-box {
+            background: var(--color-superficie); 
+            padding: 50px 30px;
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            /* Vores i ombres vermelloses usant els teus colors d'emocions */
+            border: 2px dashed var(--color-error);
+            box-shadow: 0 10px 40px rgba(255, 75, 75, 0.15);
+            width: 90%;
+            max-width: 450px;
+            margin: auto; /* La clava al centre de la pantalla */
+        }
+
+        .icona-error {
+            font-size: 5rem;
+            margin-bottom: 10px;
+            /* Animació suau de batec per cridar l'atenció */
+            animation: batecError 2s infinite alternate ease-in-out;
+        }
+
+        @keyframes batecError {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+
+        .error-box h1 {
+            color: var(--color-error);
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .missatge-txt {
+            color: var(--color-text);
+            font-size: 1.1rem;
+            line-height: 1.5;
+            margin-bottom: 35px;
+        }
+
+        /* Botó gran i fàcil de clicar per tornar a començar */
+        .btn-tornar-error {
+            display: block;
+            width: 100%;
+            background: var(--color-superficie-2);
+            color: var(--color-text);
+            border: 2px solid var(--color-vora);
+            padding: 18px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+
+        .btn-tornar-error:hover {
+            background: var(--color-superficie-claret);
+            border-color: var(--color-primari);
+            color: var(--color-primari);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px var(--ombra-primari-suau);
+        }
     </style>
 </head>
 <body>
-    <h1>⚠️ Error</h1>
-    <p>{{ missatge }}</p>
-    <a href="/">← Tornar a l'inici</a>
+    <div class="main-container">
+        
+        <div class="error-box">
+            <div class="icona-error">⚠️</div>
+            <h1>Ups!</h1>
+            <p class="missatge-txt">{{ missatge }}</p>
+            
+            <a href="/" class="btn-tornar-error">← Tornar a l'inici</a>
+        </div>
+
+    </div>
 </body>
 </html>
-

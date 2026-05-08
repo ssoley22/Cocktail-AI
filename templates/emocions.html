@@ -1,131 +1,165 @@
-<!DOCTYPE html>
-<html lang="ca">
-<head>
-    <meta charset="UTF-8">
-    <title>Com et sents? - Cocktail IA</title>
+<!DOCTYPE html>             
+<html lang="ca">         
+<head>                       
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/static/css/style.css"> 
+    <title>Cocktail IA - Emocions</title>   
     <style>
-        body { 
-            background-color: #05050a; 
-            color: white; 
-            font-family: 'Segoe UI', sans-serif; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
-            margin: 0; 
-            overflow: hidden;
+        .cuadricula-botons {
+            grid-template-columns: 1fr 1fr 1fr 1fr; /* Quatre columnes de la mateixa mida */
+            max-width: 900px;
+            width: 90%;
+            margin-bottom: auto;
         }
 
-        .btn-back { 
-            position: fixed; top: 25px; left: 25px; 
-            color: #888; text-decoration: none; font-weight: bold; 
-            border: 1px solid #333; padding: 10px 15px; border-radius: 12px; 
-            background: rgba(18, 20, 33, 0.8); transition: 0.3s; 
+        .boto.emocions {
+            background: var(--color-superficie-2);
+            align-items: center;
+            text-align: center;
+            border-radius: 35px;
         }
-        .btn-back:hover { color: #7b61ff; border-color: #7b61ff; transform: translateX(-5px); }
 
-        h1 { font-size: 2.8rem; margin-bottom: 60px; color: #eee; text-align: center; }
-
-        /* CANVI A HORITZONTAL: 4 columnes d'una sola fila */
-        .container-emocions { 
-            display: grid; 
-            grid-template-columns: repeat(4, 200px); 
-            gap: 20px; 
-            justify-content: center;
+        .boto.emocions .emoji {
+            font-size: 5rem;
+            filter: grayscale(40%);
+            transition: 0.3s;
         }
+
+        .boto.emocions .nom-emocio {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: var(--color-text-subtil);
+            letter-spacing: 2px;
+            transition: 0.3s;
+        }
+
+        .boto.emocions:hover {
+            transform: translateY(-20px);
+            
+        }
+
+        .boto.emocions:hover .emoji {
+            filter: grayscale(0);
+            transform: scale(1.15);
+        }
+
+        .boto.emocions:hover .nom-emocio {
+            color: white;
+        }
+
+        .boto.emocions.alegre:hover {
+            border-color: var(--color-alegria);
+            background: var(--color-alegria-difuminat);
+        }
+
+        .boto.emocions.trist:hover {
+            border-color: var(--color-tristesa);
+            background: var(--color-tristesa-difuminat);
+        }
+
+        .boto.emocions.estressat:hover {
+            border-color: var(--color-estres);
+            background: var(--color-estres-difuminat);
+        }
+
+        .boto.emocions.enfadat:hover {
+            border-color: var(--color-enfadat);
+            background: var(--color-enfadat-difuminat);
+        }
+
         
-        .face-btn { 
-            background: #121421; 
-            border: 2px solid #222; 
-            border-radius: 35px; 
-            padding: 45px 10px; 
-            text-decoration: none; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            gap: 20px; 
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 60px;
+            margin-top: 20vh;
         }
 
-        .emoji { font-size: 5rem; filter: grayscale(0.4); transition: 0.3s; }
-
-        /* Efectes de color en passar el ratolí */
-        .alegre:hover { border-color: #4caf50; background: rgba(76, 175, 80, 0.1); transform: translateY(-15px); }
-        .alegre:hover .emoji { filter: grayscale(0); transform: scale(1.15); }
-        
-        .trist:hover { border-color: #2196f3; background: rgba(33, 150, 243, 0.1); transform: translateY(-15px); }
-        .trist:hover .emoji { filter: grayscale(0); transform: scale(1.15); }
-
-        .estressat:hover { border-color: #ff9800; background: rgba(255, 152, 0, 0.1); transform: translateY(-15px); }
-        .estressat:hover .emoji { filter: grayscale(0); transform: scale(1.15); }
-
-        .enfadat:hover { border-color: #f44336; background: rgba(244, 67, 54, 0.1); transform: translateY(-15px); }
-        .enfadat:hover .emoji { filter: grayscale(0); transform: scale(1.15); }
-
-        .nom-emocio { font-weight: bold; font-size: 0.9rem; color: #555; letter-spacing: 2px; }
-        .face-btn:hover .nom-emocio { color: white; }
-
+        /* ANIMACIÓ DE LA IA: */
         .ia-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: rgba(5, 5, 10, 0.95);
             z-index: 1000;
-            display: none; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            text-align: center;
         }
+
         .ia-spinner {
             font-size: 6rem;
             animation: pulseIA 1s infinite alternate ease-in-out;
-            filter: drop-shadow(0 0 20px #7b61ff);
         }
+
         @keyframes pulseIA {
-            from { transform: scale(0.9); opacity: 0.6; filter: drop-shadow(0 0 10px #7b61ff); }
-            to   { transform: scale(1.15); opacity: 1;   filter: drop-shadow(0 0 40px #7b61ff); }
+            from { transform: scale(0.9); opacity: 0.6; }
+            to   { transform: scale(1.15); opacity: 1; }
         }
-        .progress-bar-container { width: 280px; height: 4px; background: #1a1d33; border-radius: 10px; overflow: hidden; }
-        .progress-bar { height: 100%; width: 40%; background: #7b61ff; border-radius: 10px; animation: slide 1.5s ease-in-out infinite; }
+
+        .progress-bar-container {
+            width: 280px; height: 4px;
+            background: var(--color-vora);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%; width: 40%;
+            background: var(--color-primari);
+            border-radius: 10px;
+            animation: slide 1.5s ease-in-out infinite;
+        }
+
         @keyframes slide {
             0%   { transform: translateX(-100%); }
-            100% { transform: translateX(350%);  }
+            100% { transform: translateX(350%); }
         }
-
     </style>
+
+
 </head>
-
 <body>
-
-    <a href="/" class="btn-back">← INICI</a>
-
-    <h1>Com et sents avui?</h1>
-
-    <div class="container-emocions">
-        <a href="/recomanacio/alegre" class="face-btn alegre">
-            <span class="emoji">😄</span>
-            <span class="nom-emocio">ALEGRE</span>
-        </a>
-        <a href="/recomanacio/trist" class="face-btn trist">
-            <span class="emoji">😢</span>
-            <span class="nom-emocio">TRIST</span>
-        </a>
-        <a href="/recomanacio/estressat" class="face-btn estressat">
-            <span class="emoji">😫</span>
-            <span class="nom-emocio">ESTRESSAT</span>
-        </a>
-        <a href="/recomanacio/enfadat" class="face-btn enfadat">
-            <span class="emoji">😡</span>
-            <span class="nom-emocio">ENFADAT</span>
-        </a>
+    <div class="main-container">
+        <div class="top-bar">
+            <a href="/" class="tornar-btn">← Tornar</a>
+        </div>
+        <h1>Com et sents avui?</h1>
+        <div class="cuadricula-botons">
+            <a href="/recomanacio/alegre" class="boto emocions alegre">
+                <div class="emoji">😄</div>
+                <div class="nom-emocio">ALEGRE</div>
+            </a>
+            <a href="/recomanacio/trist" class="boto emocions trist">
+                <div class="emoji">😢</div>
+                <div class="nom-emocio">TRIST</div>
+            </a>
+            <a href="/recomanacio/estressat" class="boto emocions estressat">
+                <div class="emoji">😫</div>
+                <div class="nom-emocio">ESTRESSAT</div>
+            </a>
+            <a href="/recomanacio/enfadat" class="boto emocions enfadat">
+                <div class="emoji">😡</div>
+                <div class="nom-emocio">ENFADAT</div>
+            </a>
+        </div>
+        
     </div>
 
     <div id="ia-loading" class="ia-overlay">
         <div class="ia-spinner">🪄</div>
-        <h2 style="color: #7b61ff; margin-bottom: 5px;">Processant Emocions...</h2>
-        <p style="color: #888;">La IA està buscant la teva beguda ideal</p>
+        <h2>Processant Emocions...</h2>
+        <p style="color: var(--color-text-subtil);">La IA està buscant la teva beguda ideal</p>
         <div class="progress-bar-container">
             <div class="progress-bar"></div>
         </div>
     </div>
+
     <script>
-        document.querySelectorAll('.face-btn').forEach(boto => {
+        document.querySelectorAll('.boto.emocions').forEach(boto => {
             boto.addEventListener('click', function() {
                 document.getElementById('ia-loading').style.display = 'flex';
             });
@@ -133,6 +167,4 @@
     </script>
 
 </body>
-
 </html>
-

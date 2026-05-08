@@ -1,0 +1,14 @@
+Connectar-se a la raspberry per ssh amb els datos
+    Raspberry:
+        hostname -I (et retorna una ip)
+    Ordinador:
+        ssh admin@la_ip_raspberry
+
+Un cop connectat, per activar el env:
+    source env/bin/activate
+
+Comando per obrir localhost:5000 per ssh en mode kiosk a la pantalla:
+    DISPLAY=:0 chromium --kiosk --noerrdialogs --disable-infobars --check-for-update-interval=31536000 --ozone-platform=wayland --enable-features=TouchpadOverscrollScrolling http://localhost:5000 > /dev/null 2>&1 &
+
+
+ 

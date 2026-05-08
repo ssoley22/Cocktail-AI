@@ -1,3 +1,8 @@
+@font-face {
+    font-family: 'Momo Signature';
+    src: url('../fonts/MomoSignature-Regular.ttf') format('truetype');
+}
+
 /* 1. DEFINICIÓ DE COLORS */
 :root {
     --color-fons: #05050a;  

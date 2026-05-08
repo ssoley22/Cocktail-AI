@@ -135,3 +135,54 @@ body {
 h1 {
     color: var(--color-primari);
 }
+
+@media (max-width: 600px) {
+    .main-container {
+        padding: 8px;
+    }
+
+    .top-bar {
+        padding: 8px 10px;
+        margin-bottom: 8px;
+    }
+
+    .container {
+        width: 100%;
+        max-width: 100%;
+        padding: 22px 16px;
+        border-radius: 22px;
+    }
+
+    .cuadricula-botons {
+        width: 100%;
+        max-width: 100%;
+        padding: 0;
+        gap: 14px;
+    }
+
+    .boto,
+    .tornar-btn,
+    button,
+    input,
+    select,
+    textarea,
+    a.btn-si,
+    a.btn-refresh,
+    a.btn-preparar-ia,
+    .btn-toggle-disp,
+    .btn-filtre,
+    .confirmar-btn,
+    .btn-enviar,
+    .btn-reiniciar {
+        min-height: 44px;
+    }
+
+    .boto {
+        justify-content: flex-start;
+        align-items: center;
+    }
+
+    h1 {
+        line-height: 1.2;
+    }
+}

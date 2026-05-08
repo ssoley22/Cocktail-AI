@@ -126,6 +126,39 @@
         .confirmar-btn:disabled::before {
             display: none;
         }
+
+        @media (max-width: 600px) {
+            .container {
+                width: 100%;
+                padding: 22px 14px;
+                border-radius: 20px;
+            }
+
+            .container.recepta {
+                width: 100%;
+                padding: 14px;
+                margin-top: 12px;
+                margin-bottom: 16px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .check-edat {
+                font-size: 1rem;
+                gap: 10px;
+            }
+
+            .confirmar-btn {
+                width: 90%;
+                min-height: 60px;
+                margin: 18px auto 0;
+                display: block;
+                font-size: 1.05rem;
+                padding: 14px;
+            }
+        }
     </style>
 
 

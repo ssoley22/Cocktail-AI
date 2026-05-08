@@ -14,6 +14,7 @@
         }
 
         .boto.emocions {
+            justify-content: center; /* Centra el contingut verticalment */
             background: var(--color-superficie-2);
             align-items: center;
             text-align: center;
@@ -117,6 +118,35 @@
         @keyframes slide {
             0%   { transform: translateX(-100%); }
             100% { transform: translateX(350%); }
+        }
+
+        @media (max-width: 650px) {
+            h1 {
+                font-size: 2rem;
+                margin-top: 40px;
+                margin-bottom: 24px;
+                text-align: center;
+            }
+
+            .cuadricula-botons {
+                grid-template-columns: 1fr 1fr;
+                width: 100%;
+                gap: 12px;
+                margin-left: 10px;
+                margin-right: 10px;
+                margin-top: 30px;
+                row-gap: 30px;
+            }
+
+            .boto.emocions {
+                min-height: 240px;
+                padding: 20px 12px;
+                
+            }
+
+            .boto.emocions .emoji {
+                font-size: 5rem;
+            }
         }
     </style>
 

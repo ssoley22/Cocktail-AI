@@ -141,6 +141,50 @@
         .link-tornar:hover {
             color: var(--color-primari);
         }
+
+        .mobile-block-box {
+            display: none;
+            width: 100%;
+            background: var(--color-superficie);
+            padding: 40px 24px;
+            border-radius: 30px;
+            border: 2px dashed var(--color-error);
+            box-shadow: 0 10px 40px rgba(255, 75, 75, 0.15);
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .mobile-block-icon {
+            font-size: 4.2rem;
+            margin-bottom: 10px;
+        }
+
+        .mobile-block-box h2 {
+            color: var(--color-error);
+            font-size: 1.8rem;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .mobile-block-box p {
+            color: var(--color-text);
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .login-box form,
+            .login-box .descripcio,
+            .login-box .missatge-error,
+            .login-box .btn-login {
+                display: none;
+            }
+
+            .mobile-block-box {
+                display: block;
+            }
+        }
     </style>
 </head>
 <body>
@@ -150,6 +194,12 @@
             <div class="icona-login">⚙️</div>
             <h1>Accés Admin</h1>
             <p class="descripcio">Zona restringida al propietari</p>
+
+            <div class="mobile-block-box" id="mobile-block-box">
+                <div class="mobile-block-icon">⚠️</div>
+                <h2>Accés denegat</h2>
+                <p>L'administració només està disponible des d'un ordinador.</p>
+            </div>
 
             {% if error %}
                 <div class="missatge-error">{{ error }}</div>
@@ -179,5 +229,23 @@
         </div>
 
     </div>
+
+    <script>
+        function bloquejarLoginMobil() {
+            if (window.innerWidth < 768) {
+                // Protecció visual i funcional: bloquegem el login en pantalles mòbils/tàctils
+                document.querySelectorAll('.login-box input, .login-box button[type="submit"]').forEach(el => {
+                    el.disabled = true;
+                });
+            } else {
+                document.querySelectorAll('.login-box input, .login-box button[type="submit"]').forEach(el => {
+                    el.disabled = false;
+                });
+            }
+        }
+
+        bloquejarLoginMobil();
+        window.addEventListener('resize', bloquejarLoginMobil);
+    </script>
 </body>
 </html>

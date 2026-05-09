@@ -33,6 +33,11 @@ def get_coctel(id):
     connexio = connectar()
     coctel = connexio.execute("""
         SELECT c.*,
+        CASE
+            WHEN c.Te_Preu_Fix = 1 AND c.Preu_Fix_Cents IS NOT NULL AND c.Preu_Fix_Cents > 0
+                THEN c.Preu_Fix_Cents
+            ELSE c.Preu_Calculat_Cents
+        END as Preu_Final_Cents,
         (SELECT MAX(i.Te_Alcohol)
          FROM Receptes r
          JOIN Ingredients i ON i.Categoria = r.Categoria
@@ -210,6 +215,60 @@ def recalcular_preus():
     except Exception:
         connexio.rollback()
         raise
+    finally:
+        connexio.close()
+
+def calcular_preu_recepta_ia(recepta_ia):
+    connexio = connectar()
+    try:
+        if not isinstance(recepta_ia, dict) or not recepta_ia:
+            return {"ok": False, "motiu": "recepta_buida"}
+
+        marge_row = connexio.execute(
+            "SELECT Valor FROM Configuracio WHERE Clau = 'MARGE_BENEFICI'"
+        ).fetchone()
+
+        try:
+            marge_benefici = Decimal(marge_row['Valor']) if marge_row else Decimal('3.0')
+        except Exception:
+            marge_benefici = Decimal('3.0')
+
+        muntatge = connexio.execute("""
+            SELECT i.Nom_Liquid, m.Preu_Ampolla_Cents, m.Mida_Ampolla_ml
+            FROM Muntatge m
+            JOIN Ingredients i ON i.ID_Ingredient = m.ID_Ingredient
+        """).fetchall()
+
+        costos_per_liquid = {
+            fila['Nom_Liquid']: {
+                'preu_ampolla_cents': fila['Preu_Ampolla_Cents'],
+                'mida_ampolla_ml': fila['Mida_Ampolla_ml']
+            }
+            for fila in muntatge
+        }
+
+        cost_total = 0
+        for liquid, ml in recepta_ia.items():
+            if liquid not in costos_per_liquid:
+                return {"ok": False, "motiu": "ingredient_no_trobat", "ingredient": liquid}
+
+            dades = costos_per_liquid[liquid]
+            cost_total += calcular_cost_ingredient_cents(
+                dades['preu_ampolla_cents'],
+                dades['mida_ampolla_ml'],
+                int(ml)
+            )
+
+        preu_cru = round_half_up(Decimal(cost_total) * marge_benefici)
+        preu_final = arrodoniment_psicologic_cents(preu_cru)
+
+        return {
+            "ok": True,
+            "cost_cents": cost_total,
+            "preu_final_cents": preu_final
+        }
+    except Exception:
+        return {"ok": False, "motiu": "error_calcul"}
     finally:
         connexio.close()
 

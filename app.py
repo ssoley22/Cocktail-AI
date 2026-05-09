@@ -62,6 +62,8 @@ def confirmacio_ia():
         "Nom_Coctel": coctel_ia['nom'],
         "frase_barman": "Una creació única basada en la nostra conversa.",
         "Alcoholic": te_alcohol,
+        "Preu_Final_Cents": coctel_ia.get('preu_final_cents'),
+        "Preu_No_Disponible": coctel_ia.get('preu_no_disponible', False),
         "Recepta": [{"Nom_Liquid": liq, "Quantitat_ml": ml} for liq, ml in coctel_ia['recepta'].items()]
     }
     return render_template('confirmacio.html', coctel=dades_virtuals, disponible=True, origen='/xat')
@@ -166,6 +168,10 @@ def recomanacio(sentit):
 
 @app.route('/xat')
 def xat():
+    if request.args.get('nou') == '1':
+        session.pop('historial', None)
+        session.pop('coctel_ia', None)
+
     if 'historial' not in session:
         session['historial'] = []
     torns_fets = len(session['historial']) // 2
@@ -198,7 +204,20 @@ def generar_xat():
     if resultat:
         session['historial'].append({"role": "assistant", "content": resultat['resposta_text']})
         if resultat.get('tinc_recepta'):
-            session['coctel_ia'] = resultat['dades_coctel']
+            dades_coctel = resultat['dades_coctel']
+
+            # Calculem el preu en temps real segons els carrils actius
+            if dades_coctel and isinstance(dades_coctel.get('recepta'), dict):
+                preu_ia = database.calcular_preu_recepta_ia(dades_coctel['recepta'])
+                if preu_ia.get('ok'):
+                    dades_coctel['preu_final_cents'] = preu_ia['preu_final_cents']
+                    dades_coctel['cost_cents'] = preu_ia['cost_cents']
+                    dades_coctel['preu_no_disponible'] = False
+                else:
+                    dades_coctel['preu_no_disponible'] = True
+
+            session['coctel_ia'] = dades_coctel
+            resultat['dades_coctel'] = dades_coctel
         
         session.modified = True
         return jsonify({

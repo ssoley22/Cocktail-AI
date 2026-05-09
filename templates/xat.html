@@ -38,9 +38,18 @@
         .btn-reiniciar { display: none; width: 100%; background: var(--color-enfadat-difuminat); color: var(--color-error); border: 1px solid var(--color-error); padding: 18px; border-radius: 20px; font-size: 1.1rem; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; letter-spacing: 1px; transition: 0.3s; }
         .btn-reiniciar:hover { background: var(--color-error); color: white; }
 
+        /* --- DISSENY TARGETA IA --- */
         .targeta-ia { background: var(--color-superficie); border: 1px dashed var(--color-primari-suau); border-radius: 20px; padding: 25px; margin-top: 10px; text-align: center; width: 100%; max-width: 90%; align-self: center; box-shadow: 0 5px 20px var(--ombra-primari-suau); }
-        .targeta-ia h3 { color: var(--color-primari); margin-bottom: 5px; font-size: 1.5rem; }
-        .targeta-ia p { color: var(--color-text-subtil); font-style: italic; font-size: 0.9rem; margin-bottom: 15px; }
+        
+        .targeta-ia h3 { color: var(--color-text); margin-bottom: 5px; font-size: 1.7rem; }
+        
+        /* Preu integrat i elegant */
+        .preu-ia { font-size: 1.4rem; font-weight: bold; color: var(--color-primari); margin-bottom: 12px; letter-spacing: 0.5px; }
+        .preu-ia.gratuit { color: var(--color-ok, #4caf50); }
+        .preu-ia.nodisponible { color: var(--color-text-subtil); font-size: 1.1rem; font-weight: normal; }
+
+        /* Descripció */
+        .descripcio-ia { color: var(--color-text-subtil); font-style: italic; font-size: 0.95rem; margin-bottom: 20px; line-height: 1.4; }
 
         .caixa-ingredients-ia { background: var(--color-superficie-2); border-radius: 15px; padding: 15px; margin-bottom: 20px; border: 1px solid var(--color-vora); }
         .ing-ia-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--color-vora); font-size: 0.95rem; }
@@ -64,49 +73,19 @@
                 padding: 0 2px 12px 2px;
             }
 
-            h1 {
-                font-size: 1.6rem;
-                margin-bottom: 12px;
-            }
+            h1 { font-size: 1.6rem; margin-bottom: 12px; }
 
-            #chat-box {
-                margin-bottom: 12px;
-                gap: 10px;
-            }
+            #chat-box { margin-bottom: 12px; gap: 10px; }
 
-            .bombolla {
-                max-width: 92%;
-                padding: 12px 14px;
-                font-size: 0.95rem;
-            }
+            .bombolla { max-width: 92%; padding: 12px 14px; font-size: 0.95rem; }
 
-            .input-zona {
-                width: 100%;
-                padding: 8px;
-                gap: 8px;
-                border-radius: 18px;
-                align-items: center;
-            }
+            .input-zona { width: 100%; padding: 8px; gap: 8px; border-radius: 18px; align-items: center; }
 
-            .input-zona textarea {
-                width: 100%;
-                min-height: 44px;
-                height: 44px;
-                font-size: 0.98rem;
-                padding: 10px;
-            }
+            .input-zona textarea { width: 100%; min-height: 44px; height: 44px; font-size: 0.98rem; padding: 10px; }
 
-            .btn-enviar {
-                width: 52px;
-                height: 52px;
-                font-size: 1.25rem;
-            }
+            .btn-enviar { width: 52px; height: 52px; font-size: 1.25rem; }
 
-            .btn-reiniciar {
-                min-height: 56px;
-                font-size: 1rem;
-                padding: 14px;
-            }
+            .btn-reiniciar { min-height: 56px; font-size: 1rem; padding: 14px; }
         }
     </style>
 </head>
@@ -141,6 +120,8 @@
         const userInput = document.getElementById('user-input');
         const inputGroup = document.getElementById('input-group');
         const btnResetFull = document.getElementById('btn-reset-full');
+        const KEY_HISTORIAL = 'historial_xat_ia_html';
+        const KEY_RESTANTS = 'historial_xat_ia_restants';
         
         let restants = {{ restants | default(3) }};
 
@@ -156,13 +137,49 @@
             }
         });
 
-        window.onload = function() {
-            if (restants <= 0) activarModeReinici();
+        function guardarHistorial() {
+            sessionStorage.setItem(KEY_HISTORIAL, chatBox.innerHTML);
+            sessionStorage.setItem(KEY_RESTANTS, String(restants));
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = new URLSearchParams(window.location.search);
+            const esNouXat = params.get('nou') === '1';
+
+            if (esNouXat) {
+                sessionStorage.removeItem(KEY_HISTORIAL);
+                sessionStorage.removeItem(KEY_RESTANTS);
+                history.replaceState({}, '', '/xat');
+            } else {
+                const historialGuardat = sessionStorage.getItem(KEY_HISTORIAL);
+                const restantsGuardats = parseInt(sessionStorage.getItem(KEY_RESTANTS) || '-1', 10);
+
+                if (restants === 3 && historialGuardat) {
+                    sessionStorage.removeItem(KEY_HISTORIAL);
+                    sessionStorage.removeItem(KEY_RESTANTS);
+                } else if (historialGuardat) {
+                    chatBox.innerHTML = historialGuardat;
+                    if (!Number.isNaN(restantsGuardats) && restantsGuardats >= 0) {
+                        restants = restantsGuardats;
+                    }
+                    scrollDown();
+                }
+            }
+
+            if (restants <= 0) activarModeReinici();
+
+            btnResetFull.onclick = function(e) {
+                e.preventDefault();
+                sessionStorage.removeItem(KEY_HISTORIAL);
+                sessionStorage.removeItem(KEY_RESTANTS);
+                window.location.href = '/reiniciar_xat';
+            };
+        });
 
         function activarModeReinici() {
             inputGroup.style.display = 'none';
             btnResetFull.style.display = 'block';
+            guardarHistorial();
         }
 
         async function enviarMissatge() {
@@ -190,6 +207,7 @@
                 
                 const data = await res.json();
                 chatBox.removeChild(typingBubble);
+                guardarHistorial();
 
                 if (data.status === "ok") {
                     appendBubble('ia', data.resposta);
@@ -208,6 +226,8 @@
                         activarModeReinici();
                     }
 
+                    guardarHistorial();
+
                 } else {
                     appendBubble('ia', "He tingut un problema amb la meva memòria. Prova de reiniciar.");
                     activarModeReinici();
@@ -224,6 +244,7 @@
             div.innerText = txt; 
             chatBox.appendChild(div);
             scrollDown();
+            guardarHistorial();
         }
 
         function appendCounterText(txt) {
@@ -232,19 +253,42 @@
             div.innerText = txt;
             chatBox.appendChild(div);
             scrollDown();
+            guardarHistorial();
         }
 
         function appendCoctelCard(dades) {
             const card = document.createElement('div');
             card.className = "targeta-ia";
 
-            // Protecció: usem textContent per evitar que HTML de la IA trenqui la interfície
+            // 1. Títol
             const titol = document.createElement('h3');
             titol.textContent = `🍹 ${dades.nom || 'Còctel IA'}`;
 
+            // 2. Preu (nou ordre, a sota del títol)
+            const preu = document.createElement('div');
+            if (dades.preu_no_disponible) {
+                preu.textContent = 'Preu no disponible';
+                preu.className = 'preu-ia nodisponible';
+            } else if (typeof dades.preu_final_cents === 'number') {
+                if (dades.preu_final_cents === 0) {
+                    preu.textContent = 'Gratuït';
+                    preu.className = 'preu-ia gratuit';
+                } else {
+                    const euros = (dades.preu_final_cents / 100).toFixed(2).replace('.', ',');
+                    preu.textContent = `${euros} €`;
+                    preu.className = 'preu-ia';
+                }
+            } else {
+                preu.textContent = 'Preu no disponible';
+                preu.className = 'preu-ia nodisponible';
+            }
+
+            // 3. Descripció (ara a sota del preu)
             const descripcio = document.createElement('p');
+            descripcio.className = 'descripcio-ia';
             descripcio.textContent = dades.descripcio || 'Fórmula única generada en temps real per la nostra IA.';
 
+            // 4. Ingredients
             const ingredientsBox = document.createElement('div');
             ingredientsBox.className = 'caixa-ingredients-ia';
 
@@ -266,17 +310,22 @@
                 }
             }
 
+            // 5. Botó
             const botoPreparar = document.createElement('a');
             botoPreparar.href = '/confirmacio_ia';
             botoPreparar.className = 'btn-preparar-ia';
             botoPreparar.textContent = 'PREPARAR AQUEST CÒCTEL';
 
+            // Afegim els elements exactament en l'ordre desitjat
             card.appendChild(titol);
+            card.appendChild(preu);
             card.appendChild(descripcio);
             card.appendChild(ingredientsBox);
             card.appendChild(botoPreparar);
+            
             chatBox.appendChild(card);
             scrollDown();
+            guardarHistorial();
         }
 
         function scrollDown() {

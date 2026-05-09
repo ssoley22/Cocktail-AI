@@ -3,6 +3,9 @@ import database
 import random
 import IA
 
+database.assegurar_schema_comandes_financeres()
+database.recalcular_preus()
+
 app = Flask(__name__)
 app.secret_key = 'clau_secreta_cocktail_2026'
 
@@ -114,7 +117,11 @@ def preparar(id_coctel):
             connexio.commit()
             
             # Registrar comanda per a les estadístiques (Admin)
-            database.registrar_comanda(f"IA: {coctel_ia['nom']}")
+            database.registrar_comanda(
+                f"IA: {coctel_ia['nom']}",
+                coctel_ia.get('cost_cents', 0),
+                coctel_ia.get('preu_final_cents', 0)
+            )
                 
         except Exception as e:
             connexio.rollback()
@@ -134,7 +141,11 @@ def preparar(id_coctel):
         
         # Registrar comanda per a les estadístiques (Admin)
         try:
-            database.registrar_comanda(dades['Nom_Coctel'])
+            database.registrar_comanda(
+                dades['Nom_Coctel'],
+                dades.get('Preu_Produccio_Cents', 0),
+                dades.get('Preu_Final_Cents', 0)
+            )
         except Exception as e:
             pass
 
@@ -257,6 +268,8 @@ def admin():
     carrils = database.get_muntatge()
     liquids = database.get_ingredients()
     estadistiques = database.get_estadistiques()
+    dashboard = database.get_dades_dashboard()
+    marge_actual = database.get_configuracio().get('marge', 3.0)
     
     tots = database.get_tots_els_coctels()
     disponibles_ara = database.get_coctels_disponibles()
@@ -271,7 +284,26 @@ def admin():
                            carrils=carrils, 
                            liquids=liquids,
                            estadistiques=estadistiques,
-                           coctels=tots)
+                           coctels=tots,
+                           dashboard=dashboard,
+                           marge_actual=marge_actual)
+
+@app.route('/guardar_marge', methods=['POST'])
+def guardar_marge():
+    if not session.get('admin_loguejat'):
+        return jsonify({"status": "error", "message": "No autoritzat"}), 401
+
+    dades_json = request.get_json(silent=True) or {}
+    marge = dades_json.get('marge') if 'marge' in dades_json else request.form.get('marge')
+
+    try:
+        database.update_marge_configuracio(marge)
+        database.recalcular_preus()
+        return jsonify({"status": "ok"})
+    except (TypeError, ValueError):
+        return jsonify({"status": "error", "message": "Marge invàlid"}), 400
+    except Exception:
+        return jsonify({"status": "error", "message": "Error intern"}), 500
 
 @app.route('/guardar_carril', methods=['POST'])
 def guardar_carril():
@@ -287,9 +319,9 @@ def guardar_carril():
     try:
         pos = int(request.form.get('posicio'))
         ing_id = int(request.form.get('id_ingredient'))
-        quantitat = int(request.form.get('ml'))
         preu_ampolla_cents = int(round(float(request.form.get('preu_ampolla_eur')) * 100))
         mida_ampolla_ml = int(request.form.get('mida_ampolla_ml'))
+        quantitat = mida_ampolla_ml
     except (TypeError, ValueError):
         if es_ajax:
             return jsonify({"status": "error", "message": "Dades invàlides"}), 400

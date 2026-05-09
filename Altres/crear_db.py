@@ -56,6 +56,8 @@ def crear_database():
         CREATE TABLE Comandes (
             ID_Comanda    INTEGER PRIMARY KEY AUTOINCREMENT,
             Nom_Cocktail  TEXT NOT NULL,
+            Cost_Cents    INTEGER DEFAULT 0,
+            Preu_Venut_Cents INTEGER DEFAULT 0,
             Data_Hora     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)

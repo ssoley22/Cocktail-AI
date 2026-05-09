@@ -11,6 +11,56 @@ def connectar():
     connexio.row_factory = sqlite3.Row
     return connexio
 
+def assegurar_schema_comandes_financeres():
+    connexio = connectar()
+    try:
+        columnes = connexio.execute("PRAGMA table_info(Comandes)").fetchall()
+        noms_columnes = {col['name'] for col in columnes}
+
+        if 'Cost_Cents' not in noms_columnes:
+            connexio.execute("ALTER TABLE Comandes ADD COLUMN Cost_Cents INTEGER DEFAULT 0")
+
+        if 'Preu_Venut_Cents' not in noms_columnes:
+            connexio.execute("ALTER TABLE Comandes ADD COLUMN Preu_Venut_Cents INTEGER DEFAULT 0")
+
+        connexio.execute("""
+            WITH coctels_preu AS (
+                SELECT
+                    Nom_Coctel,
+                    Preu_Produccio_Cents,
+                    CASE
+                        WHEN Te_Preu_Fix = 1 AND Preu_Fix_Cents IS NOT NULL AND Preu_Fix_Cents > 0
+                            THEN Preu_Fix_Cents
+                        ELSE Preu_Calculat_Cents
+                    END AS Preu_Final_Cents
+                FROM Coctels
+            )
+            UPDATE Comandes
+            SET
+                Cost_Cents = COALESCE((
+                    SELECT cp.Preu_Produccio_Cents
+                    FROM coctels_preu cp
+                    WHERE cp.Nom_Coctel = CASE
+                        WHEN Comandes.Nom_Cocktail LIKE 'IA: %' THEN SUBSTR(Comandes.Nom_Cocktail, 5)
+                        ELSE Comandes.Nom_Cocktail
+                    END
+                ), 0),
+                Preu_Venut_Cents = COALESCE((
+                    SELECT cp.Preu_Final_Cents
+                    FROM coctels_preu cp
+                    WHERE cp.Nom_Coctel = CASE
+                        WHEN Comandes.Nom_Cocktail LIKE 'IA: %' THEN SUBSTR(Comandes.Nom_Cocktail, 5)
+                        ELSE Comandes.Nom_Cocktail
+                    END
+                ), 0)
+            WHERE COALESCE(Cost_Cents, 0) = 0
+               OR COALESCE(Preu_Venut_Cents, 0) = 0
+        """)
+
+        connexio.commit()
+    finally:
+        connexio.close()
+
 def get_ingredients():
     connexio = connectar()
     llistat = connexio.execute("SELECT * FROM Ingredients").fetchall()
@@ -116,6 +166,122 @@ def update_muntatge(posicio, id_ingredient, capacitat, preu_ampolla_cents, mida_
     connexio.commit()
     connexio.close()
 
+def get_configuracio():
+    connexio = connectar()
+    try:
+        fila = connexio.execute(
+            "SELECT Valor FROM Configuracio WHERE Clau = 'MARGE_BENEFICI'"
+        ).fetchone()
+        try:
+            marge = float(fila['Valor']) if fila else 3.0
+        except Exception:
+            marge = 3.0
+        return {"marge": marge}
+    finally:
+        connexio.close()
+
+def update_marge_configuracio(nou_marge_str):
+    nou_marge = float(nou_marge_str)
+    connexio = connectar()
+    try:
+        connexio.execute(
+            "UPDATE Configuracio SET Valor = ? WHERE Clau = 'MARGE_BENEFICI'",
+            (str(nou_marge),)
+        )
+        connexio.commit()
+    finally:
+        connexio.close()
+
+def get_dades_dashboard():
+    connexio = connectar()
+    try:
+        estoc_ampolles = [dict(fila) for fila in connexio.execute("""
+            SELECT i.Nom_Liquid, m.Capacitat_Actual_ml, m.Mida_Ampolla_ml
+            FROM Muntatge m
+            JOIN Ingredients i ON i.ID_Ingredient = m.ID_Ingredient
+            ORDER BY m.Posicio
+        """).fetchall()]
+
+        finances_row = connexio.execute("""
+            SELECT
+                COALESCE(SUM(Preu_Venut_Cents), 0) AS Ingressos_Cents,
+                COALESCE(SUM(Cost_Cents), 0) AS Costos_Cents
+            FROM Comandes
+        """).fetchone()
+
+        top_coctels = [dict(fila) for fila in connexio.execute("""
+            WITH comandes_norm AS (
+                SELECT
+                    CASE
+                        WHEN Nom_Cocktail LIKE 'IA: %' THEN SUBSTR(Nom_Cocktail, 5)
+                        ELSE Nom_Cocktail
+                    END AS Nom_Normalitzat
+                FROM Comandes
+            )
+            SELECT Nom_Normalitzat AS Nom, COUNT(*) AS Vendes
+            FROM comandes_norm
+            GROUP BY Nom_Normalitzat
+            ORDER BY Vendes DESC
+            LIMIT 10
+        """).fetchall()]
+
+        mix_ia = connexio.execute("""
+            SELECT
+                COALESCE(SUM(CASE WHEN Nom_Cocktail LIKE 'IA: %' THEN 1 ELSE 0 END), 0) AS IA,
+                COALESCE(SUM(CASE WHEN Nom_Cocktail LIKE 'IA: %' THEN 0 ELSE 1 END), 0) AS Carta
+            FROM Comandes
+        """).fetchone()
+
+        mix_alcohol = connexio.execute("""
+            WITH comandes_norm AS (
+                SELECT
+                    CASE
+                        WHEN Nom_Cocktail LIKE 'IA: %' THEN SUBSTR(Nom_Cocktail, 5)
+                        ELSE Nom_Cocktail
+                    END AS Nom_Normalitzat
+                FROM Comandes
+            ),
+            coctels_alc AS (
+                SELECT
+                    c.Nom_Coctel,
+                    COALESCE((
+                        SELECT MAX(i.Te_Alcohol)
+                        FROM Receptes r
+                        JOIN Ingredients i ON i.Categoria = r.Categoria
+                        WHERE r.ID_Coctel = c.ID_Coctel
+                    ), 0) AS Alcoholic
+                FROM Coctels c
+            )
+            SELECT
+                COALESCE(SUM(CASE WHEN ca.Alcoholic = 1 THEN 1 ELSE 0 END), 0) AS Amb_Alcohol,
+                COALESCE(SUM(CASE WHEN ca.Alcoholic = 1 THEN 0 ELSE 1 END), 0) AS Sense_Alcohol
+            FROM comandes_norm cn
+            LEFT JOIN coctels_alc ca ON ca.Nom_Coctel = cn.Nom_Normalitzat
+        """).fetchone()
+
+        ingressos = finances_row['Ingressos_Cents'] if finances_row else 0
+        costos = finances_row['Costos_Cents'] if finances_row else 0
+
+        return {
+            "Estoc_Ampolles": estoc_ampolles,
+            "Finances": {
+                "Ingressos_Cents": ingressos,
+                "Costos_Cents": costos,
+                "Benefici_Cents": ingressos - costos
+            },
+            "Top_Coctels": top_coctels,
+            "Mix_IA_vs_Carta": {
+                "IA": mix_ia['IA'] if mix_ia else 0,
+                "Carta": mix_ia['Carta'] if mix_ia else 0
+            },
+            "Mix_Alcohol_vs_00": {
+                "Amb_Alcohol": mix_alcohol['Amb_Alcohol'] if mix_alcohol else 0,
+                "Sense_Alcohol": mix_alcohol['Sense_Alcohol'] if mix_alcohol else 0
+            }
+        }
+    finally:
+        connexio.close()
+
 def update_preu_fix_coctel(id_coctel, te_preu_fix, preu_fix_cents):
     connexio = connectar()
     connexio.execute("""
@@ -134,17 +300,8 @@ def arrodoniment_psicologic_cents(preu_cents):
     if preu_cents <= 0:
         return 0
 
-    euros = preu_cents // 100
-    centims = preu_cents % 100
-
-    if centims <= 24:
-        centims_final = 0
-    elif centims <= 74:
-        centims_final = 50
-    else:
-        centims_final = 95
-
-    return euros * 100 + centims_final
+    # Arrodoniment comercial a passos de 5 cèntims, sempre cap amunt
+    return ((preu_cents + 4) // 5) * 5
 
 def calcular_cost_ingredient_cents(preu_ampolla_cents, mida_ampolla_ml, quantitat_ml):
     if mida_ampolla_ml <= 0 or preu_ampolla_cents < 0 or quantitat_ml <= 0:
@@ -296,11 +453,14 @@ def restar_estoc(id_coctel):
 
 # --- FUNCIONS NOVES (Comandes i Receptes Manuals) ---
 
-def registrar_comanda(nom_coctel):
+def registrar_comanda(nom_coctel, cost_cents, preu_venut_cents):
     # La taula ja existeix (està a crear_db.py) per tant només cal fer l'INSERT. Molt més ràpid.
     try:
         conn = connectar()
-        conn.execute("INSERT INTO Comandes (Nom_Cocktail) VALUES (?)", (nom_coctel,))
+        conn.execute(
+            "INSERT INTO Comandes (Nom_Cocktail, Cost_Cents, Preu_Venut_Cents) VALUES (?, ?, ?)",
+            (nom_coctel, int(cost_cents or 0), int(preu_venut_cents or 0))
+        )
         conn.commit()
         conn.close()
     except Exception as e:

@@ -1,0 +1,196 @@
+<!DOCTYPE html>             
+<html lang="ca">       
+<head>                       
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/static/css/style.css"> 
+    <title>Cocktail IA - Pantalla d'estat</title>   
+    <style>
+        body {
+            overflow: hidden; /* Evita que surtin barres de desplaçament */
+            height: 100vh;
+        }
+
+        .main-container {
+            height: 100vh;
+        }
+
+        .graella-principal {
+            display: grid;
+            grid-template-columns: 4.3fr 5.7fr; /* 40% Esquerra / 60% Dreta */
+            gap: 10px; /* Separació entre columnes */
+            width: 100%;
+            height: 100%;
+        }
+
+        .columna {
+            display: grid;
+            grid-template-rows: 1fr 1fr; 
+            gap: 10px;
+            height: 100%;
+        }
+
+        /* La classe base per a les 3 caixes */
+        .container {
+            border: 1px solid var(--color-vora);
+            display: flex;
+            flex-direction: column;
+            min-width: 100%; /* Força l'amplada al 100% de la cel·la del grid */
+            min-height: 100%; /* Força l'alçada al 100% de la cel·la del grid */
+            margin: 0; 
+            box-shadow: none;
+            padding: 20px;
+        }
+
+        h1 {
+            font-family: 'Momo Signature', cursive; /* Per tenir el text normal esborrar aquesta linia i posar el spacing a 5px */
+            letter-spacing: 0px;
+            font-size: clamp(1rem, 10vw, 2.8rem); /* Dinàmic: s'adapta a la pantalla */
+            text-shadow: 0 0 50px var(--ombra-primari); /* Afegeix una ombra al text */
+            margin: 0;
+        }
+
+        p {
+            letter-spacing: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--color-text-subtil);
+            margin-top: 20px;
+        }
+
+        .QR {
+            margin-top: 15px;
+            height: 200px;
+            width: 200px;
+            background: white;
+            border: 2px solid var(--color-superficie);
+            border-radius: 15px ;
+            box-shadow: 0 0 20px var(--ombra-primari-suau);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .url-text {
+            margin-top: 5px;
+            font-size: 0.6rem;
+            color: var(--color-text-subtil-2);
+        }
+
+        .graella-pindoles {
+            display: flex;
+            flex-wrap: wrap; /* Fa que saltin de línia si no hi caben */
+            gap: 15px;
+            width: 100%;
+            margin-top: 15px;
+            align-content: flex-start; /* Ho manté tot alineat a dalt */
+        }
+
+        .pindola {
+            background-color: var(--color-superficie-claret);
+            border: 2px solid var(--color-vora);
+            color: var(--color-text-subtil);
+            padding: 5px 10px;
+            border-radius: 25px; /* Forma arrodonida de píndola */
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centra verticalment */
+        }
+
+        .numero-pindola {
+            font-size: 1.3rem;
+            font-family: 'Courier New', Courier, monospace; /* Lletra de màquina/números */
+            font-weight: bold;
+            color: var(--color-estres);
+        }
+
+        .text-pindola {
+            font-size: 0.6rem;
+        }
+
+        .container.estat {
+            /* Aquestes dues linies seguents haurien de canviar segons si esperen pagament, si està preparant o si està llest (verd, --color-alegria) */
+            border: 2px dashed var(--color-estres);
+            background: var(--color-estres-difuminat);
+
+            display: flex;
+            flex-direction: row; 
+            align-items: center; /* centra verticalment */
+            gap: 12px; 
+        }
+
+        .bloc-estat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 30px;
+            border-right: 1px solid var(--color-estres); 
+            padding-right: 30px;
+            padding-left: 15px;
+            gap: 0px;
+        }
+
+        .bloc-estat .numero-pindola {
+            line-height: 1;
+        }
+
+        .text-estat {
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            font-weight: bold;
+            color: var(--color-estres);
+            flex: 1;
+            text-transform: uppercase;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="main-container">
+
+        <div class="graella-principal">          
+            
+            <div class="container">
+                <h1>Cocktail IA</h1>
+                <p> ESCANEJA PER DEMANAR</p>
+                <div class="QR">
+
+                </div>
+                <p class="url-text">bar-ia.local</p>
+            </div>
+            <div class="columna">                
+                <div class="container">
+                    <p style="margin-top: 0px;">EN CUA</p>
+                    <div class="graella-pindoles" id="llista-espera">
+                        <div class="pindola">
+                            <span class="numero-pindola">#05</span>
+                            <span class="text-pindola">Vodka Llimona</span>
+                        </div>
+                        <div class="pindola">
+                            <span class="numero-pindola">#06</span>
+                            <span class="text-pindola">Rom Taronja</span>
+                        </div>
+                        <div class="pindola">
+                            <span class="numero-pindola">#07</span>
+                            <span class="text-pindola">Screwdriver</span>
+                        </div>
+                        <div class="pindola">
+                            <span class="numero-pindola">#08</span>
+                            <span class="text-pindola">Passió llunar dolça</span> 
+                        </div> 
+                    </div>
+                </div>
+                <div class="container estat">
+                    <div class="bloc-estat">
+                        <span class="numero-pindola" style="font-size: 4.5rem;">#04</span>
+                        <p> Sweet Sunrise</p>
+                    </div>
+                    <span class="text-estat"> Pendent de pagament</span>
+
+                </div>
+            </div>
+
+        </div>        
+    </div>
+</body>
+</html>

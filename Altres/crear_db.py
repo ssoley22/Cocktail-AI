@@ -11,7 +11,7 @@ def crear_database():
     conn = sqlite3.connect(RUTA_DB)
 
     # ==========================================
-    # 1. CREAR TAULES (Ara amb Comandes inclosa)
+    # 1. CREAR TAULES (Ara amb Sistema de Cues)
     # ==========================================
     conn.executescript("""
         CREATE TABLE Ingredients (
@@ -58,7 +58,9 @@ def crear_database():
             Nom_Cocktail  TEXT NOT NULL,
             Cost_Cents    INTEGER DEFAULT 0,
             Preu_Venut_Cents INTEGER DEFAULT 0,
-            Data_Hora     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            Data_Hora     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            Estat         TEXT DEFAULT 'Pendent',
+            Num_Comanda   INTEGER DEFAULT 0
         );
     """)
 

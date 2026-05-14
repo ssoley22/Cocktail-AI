@@ -3,7 +3,6 @@ import database
 import random
 import IA
 
-database.assegurar_schema_comandes_financeres()
 database.recalcular_preus()
 
 app = Flask(__name__)
@@ -71,6 +70,10 @@ def confirmacio_ia():
     }
     return render_template('confirmacio.html', coctel=dades_virtuals, disponible=True, origen='/xat')
 
+@app.route('/pantalla')
+def pantalla_estat():
+    return render_template('pantalla.html')
+
 @app.route('/preparar/<int:id_coctel>', methods=['POST'])
 def preparar(id_coctel):
     # ==========================================
@@ -117,7 +120,7 @@ def preparar(id_coctel):
             connexio.commit()
             
             # Registrar comanda per a les estadístiques (Admin)
-            database.registrar_comanda(
+            id_comanda, num_comanda = database.registrar_comanda(
                 f"IA: {coctel_ia['nom']}",
                 coctel_ia.get('cost_cents', 0),
                 coctel_ia.get('preu_final_cents', 0)
@@ -141,7 +144,7 @@ def preparar(id_coctel):
         
         # Registrar comanda per a les estadístiques (Admin)
         try:
-            database.registrar_comanda(
+            id_comanda, num_comanda = database.registrar_comanda(
                 dades['Nom_Coctel'],
                 dades.get('Preu_Produccio_Cents', 0),
                 dades.get('Preu_Final_Cents', 0)

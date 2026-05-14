@@ -11,56 +11,6 @@ def connectar():
     connexio.row_factory = sqlite3.Row
     return connexio
 
-def assegurar_schema_comandes_financeres():
-    connexio = connectar()
-    try:
-        columnes = connexio.execute("PRAGMA table_info(Comandes)").fetchall()
-        noms_columnes = {col['name'] for col in columnes}
-
-        if 'Cost_Cents' not in noms_columnes:
-            connexio.execute("ALTER TABLE Comandes ADD COLUMN Cost_Cents INTEGER DEFAULT 0")
-
-        if 'Preu_Venut_Cents' not in noms_columnes:
-            connexio.execute("ALTER TABLE Comandes ADD COLUMN Preu_Venut_Cents INTEGER DEFAULT 0")
-
-        connexio.execute("""
-            WITH coctels_preu AS (
-                SELECT
-                    Nom_Coctel,
-                    Preu_Produccio_Cents,
-                    CASE
-                        WHEN Te_Preu_Fix = 1 AND Preu_Fix_Cents IS NOT NULL AND Preu_Fix_Cents > 0
-                            THEN Preu_Fix_Cents
-                        ELSE Preu_Calculat_Cents
-                    END AS Preu_Final_Cents
-                FROM Coctels
-            )
-            UPDATE Comandes
-            SET
-                Cost_Cents = COALESCE((
-                    SELECT cp.Preu_Produccio_Cents
-                    FROM coctels_preu cp
-                    WHERE cp.Nom_Coctel = CASE
-                        WHEN Comandes.Nom_Cocktail LIKE 'IA: %' THEN SUBSTR(Comandes.Nom_Cocktail, 5)
-                        ELSE Comandes.Nom_Cocktail
-                    END
-                ), 0),
-                Preu_Venut_Cents = COALESCE((
-                    SELECT cp.Preu_Final_Cents
-                    FROM coctels_preu cp
-                    WHERE cp.Nom_Coctel = CASE
-                        WHEN Comandes.Nom_Cocktail LIKE 'IA: %' THEN SUBSTR(Comandes.Nom_Cocktail, 5)
-                        ELSE Comandes.Nom_Cocktail
-                    END
-                ), 0)
-            WHERE COALESCE(Cost_Cents, 0) = 0
-               OR COALESCE(Preu_Venut_Cents, 0) = 0
-        """)
-
-        connexio.commit()
-    finally:
-        connexio.close()
-
 def get_ingredients():
     connexio = connectar()
     llistat = connexio.execute("SELECT * FROM Ingredients").fetchall()
@@ -454,17 +404,48 @@ def restar_estoc(id_coctel):
 # --- FUNCIONS NOVES (Comandes i Receptes Manuals) ---
 
 def registrar_comanda(nom_coctel, cost_cents, preu_venut_cents):
-    # La taula ja existeix (està a crear_db.py) per tant només cal fer l'INSERT. Molt més ràpid.
+    conn = connectar()
     try:
-        conn = connectar()
-        conn.execute(
-            "INSERT INTO Comandes (Nom_Cocktail, Cost_Cents, Preu_Venut_Cents) VALUES (?, ?, ?)",
-            (nom_coctel, int(cost_cents or 0), int(preu_venut_cents or 0))
+        # Bloqueig d'escriptura per evitar col·lisions de torn simultànies
+        conn.execute("BEGIN IMMEDIATE")
+
+        fila = conn.execute("""
+            SELECT Num_Comanda
+            FROM Comandes
+            WHERE DATE(Data_Hora, 'localtime') = DATE('now', 'localtime')
+            ORDER BY ID_Comanda DESC
+            LIMIT 1
+        """).fetchone()
+
+        ultim_num = int(fila['Num_Comanda']) if fila and fila['Num_Comanda'] is not None else 0
+
+        # Torns cíclics diaris: 1..99 i torna a 1
+        if ultim_num <= 0:
+            nou_num = 1
+        elif ultim_num >= 99:
+            nou_num = 1
+        else:
+            nou_num = ultim_num + 1
+
+        cost = int(cost_cents or 0)
+        preu = int(preu_venut_cents or 0)
+
+        cursor = conn.execute(
+            """
+            INSERT INTO Comandes (Nom_Cocktail, Cost_Cents, Preu_Venut_Cents, Estat, Num_Comanda)
+            VALUES (?, ?, ?, 'Pendent', ?)
+            """,
+            (nom_coctel, cost, preu, nou_num)
         )
+
         conn.commit()
-        conn.close()
+        return cursor.lastrowid, nou_num
     except Exception as e:
+        conn.rollback()
         print(f"❌ ERROR REGISTRANT COMANDA: {e}")
+        raise
+    finally:
+        conn.close()
 
 def get_estadistiques():
     connexio = connectar()

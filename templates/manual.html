@@ -338,13 +338,17 @@
                     <div class="targeta-text">
                         <h3>{{ coctel.Nom_Coctel }}</h3>
                         
-                        <div class="preu-llista {{ 'gratuit' if (coctel.Preu_Final_Cents or 0) == 0 else '' }}">
-                            {% if (coctel.Preu_Final_Cents or 0) == 0 %}
-                                Gratuït
-                            {% else %}
-                                {{ ('%.2f'|format((coctel.Preu_Final_Cents or 0) / 100))|replace('.', ',') }} €
-                            {% endif %}
-                        </div>
+                        {% if coctel.disponible %}
+                            <div class="preu-llista {{ 'gratuit' if (coctel.Preu_Final_Cents or 0) == 0 else '' }}">
+                                {% if (coctel.Preu_Final_Cents or 0) == 0 %}
+                                    Gratuït
+                                {% else %}
+                                    {{ ('%.2f'|format((coctel.Preu_Final_Cents or 0) / 100))|replace('.', ',') }} €
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="preu-llista">Sense estoc</div>
+                        {% endif %}
 
                         <p>{{ coctel.Descripcio }}</p>
                     </div>

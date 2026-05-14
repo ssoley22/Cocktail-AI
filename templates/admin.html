@@ -456,27 +456,43 @@
                                 <td style="text-align: left; font-weight: bold;">{{ c.Nom_Coctel }}</td>
 
                                 <td class="text-nowrap" style="font-weight: bold; color: var(--color-text-subtil);">
-                                    {{ ('%.2f'|format((c.Preu_Produccio_Cents or 0) / 100))|replace('.', ',') }} €
+                                    {% if c.puc_fer_lo %}
+                                        {{ ('%.2f'|format((c.Preu_Produccio_Cents or 0) / 100))|replace('.', ',') }} €
+                                    {% else %}
+                                        -
+                                    {% endif %}
                                 </td>
                                 <td class="text-nowrap" style="font-weight: bold; color: var(--color-primari); font-size: 1.1rem;">
-                                    {{ ('%.2f'|format((c.Preu_Calculat_Cents or 0) / 100))|replace('.', ',') }} €
+                                    {% if c.puc_fer_lo %}
+                                        {{ ('%.2f'|format((c.Preu_Calculat_Cents or 0) / 100))|replace('.', ',') }} €
+                                    {% else %}
+                                        -
+                                    {% endif %}
                                 </td>
 
                                 <td>
-                                    <div class="manual-price-wrapper">
-                                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--color-text-subtil); font-weight: bold; font-size: 0.85rem;" title="Fixar preu manual">
-                                            <input type="checkbox" name="te_preu_fix" form="form_fix_{{ c.ID_Coctel }}" onchange="togglePreuInput({{ c.ID_Coctel }})" {% if c.Te_Preu_Fix == 1 %}checked{% endif %} style="width: 22px; height: 22px; accent-color: var(--color-primari);">
-                                            FIX
-                                        </label>
-                                        <input type="number" id="input_preu_{{ c.ID_Coctel }}" name="preu_fix_eur" form="form_fix_{{ c.ID_Coctel }}" step="0.01" min="0" value="{{ '%.2f'|format((c.Preu_Fix_Cents or 0) / 100) if c.Preu_Fix_Cents is not none else '' }}" placeholder="Ex: 5.00" style="width: 110px; text-align: center; display: {% if c.Te_Preu_Fix == 1 %}block{% else %}none{% endif %};">
-                                    </div>
+                                    {% if c.puc_fer_lo %}
+                                        <div class="manual-price-wrapper">
+                                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--color-text-subtil); font-weight: bold; font-size: 0.85rem;" title="Fixar preu manual">
+                                                <input type="checkbox" name="te_preu_fix" form="form_fix_{{ c.ID_Coctel }}" onchange="togglePreuInput({{ c.ID_Coctel }})" {% if c.Te_Preu_Fix == 1 %}checked{% endif %} style="width: 22px; height: 22px; accent-color: var(--color-primari);">
+                                                FIX
+                                            </label>
+                                            <input type="number" id="input_preu_{{ c.ID_Coctel }}" name="preu_fix_eur" form="form_fix_{{ c.ID_Coctel }}" step="0.01" min="0" value="{{ '%.2f'|format((c.Preu_Fix_Cents or 0) / 100) if c.Preu_Fix_Cents is not none else '' }}" placeholder="Ex: 5.00" style="width: 110px; text-align: center; display: {% if c.Te_Preu_Fix == 1 %}block{% else %}none{% endif %};">
+                                        </div>
+                                    {% else %}
+                                        -
+                                    {% endif %}
                                 </td>
 
                                 <td>
-                                    <form id="form_fix_{{ c.ID_Coctel }}" action="/guardar_preu_fix" method="POST">
-                                        <input type="hidden" name="id_coctel" value="{{ c.ID_Coctel }}">
-                                        <button type="submit" class="btn-desar">DESAR</button>
-                                    </form>
+                                    {% if c.puc_fer_lo %}
+                                        <form id="form_fix_{{ c.ID_Coctel }}" action="/guardar_preu_fix" method="POST">
+                                            <input type="hidden" name="id_coctel" value="{{ c.ID_Coctel }}">
+                                            <button type="submit" class="btn-desar">DESAR</button>
+                                        </form>
+                                    {% else %}
+                                        -
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}

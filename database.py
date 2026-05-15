@@ -462,6 +462,77 @@ def get_estadistiques():
     finally:
         connexio.close()
 
+def get_estat_pantalla():
+    connexio = connectar()
+    try:
+        activa = None
+
+        # 1) Prioritat màxima: comanda LLesta
+        fila_activa = connexio.execute("""
+            SELECT ID_Comanda, Num_Comanda, Nom_Cocktail, Estat
+            FROM Comandes
+            WHERE DATE(Data_Hora, 'localtime') = DATE('now', 'localtime')
+              AND Estat = 'Llest'
+            ORDER BY ID_Comanda ASC
+            LIMIT 1
+        """).fetchone()
+
+        # 2) Si no n'hi ha cap de LLesta, mirem Preparant
+        if fila_activa is None:
+            fila_activa = connexio.execute("""
+                SELECT ID_Comanda, Num_Comanda, Nom_Cocktail, Estat
+                FROM Comandes
+                WHERE DATE(Data_Hora, 'localtime') = DATE('now', 'localtime')
+                  AND Estat = 'Preparant'
+                ORDER BY ID_Comanda ASC
+                LIMIT 1
+            """).fetchone()
+
+        # 3) Si tampoc n'hi ha, agafem la Pendent més antiga
+        if fila_activa is None:
+            fila_activa = connexio.execute("""
+                SELECT ID_Comanda, Num_Comanda, Nom_Cocktail, Estat
+                FROM Comandes
+                WHERE DATE(Data_Hora, 'localtime') = DATE('now', 'localtime')
+                  AND Estat = 'Pendent'
+                ORDER BY ID_Comanda ASC
+                LIMIT 1
+            """).fetchone()
+
+        id_activa = None
+        if fila_activa is not None:
+            id_activa = fila_activa['ID_Comanda']
+            activa = {
+                "Num_Comanda": fila_activa['Num_Comanda'],
+                "Nom_Cocktail": fila_activa['Nom_Cocktail'],
+                "Estat": fila_activa['Estat']
+            }
+
+        # La cua són totes les pendents excepte la que ja és activa
+        cua_rows = connexio.execute("""
+            SELECT ID_Comanda, Num_Comanda, Nom_Cocktail
+            FROM Comandes
+            WHERE DATE(Data_Hora, 'localtime') = DATE('now', 'localtime')
+              AND Estat = 'Pendent'
+              AND (? IS NULL OR ID_Comanda != ?)
+            ORDER BY ID_Comanda ASC
+        """, (id_activa, id_activa)).fetchall()
+
+        cua = [
+            {
+                "Num_Comanda": fila['Num_Comanda'],
+                "Nom_Cocktail": fila['Nom_Cocktail']
+            }
+            for fila in cua_rows
+        ]
+
+        return {"activa": activa, "cua": cua}
+    except Exception as e:
+        print(f"❌ ERROR OBTENINT ESTAT PANTALLA: {e}")
+        return {"activa": None, "cua": []}
+    finally:
+        connexio.close()
+
 def crear_recepta_completa(nom, descripcio, ingredients):
     """
     Guarda un còctel nou buscant la categoria correcta dels líquids passats

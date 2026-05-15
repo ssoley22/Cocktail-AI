@@ -244,6 +244,11 @@ def generar_xat():
         
     return jsonify({"status": "error"}), 500
 
+@app.route('/api/cua', methods=['GET'])
+def api_cua():
+    dades = database.get_estat_pantalla()
+    return jsonify(dades)
+
 @app.route('/reiniciar_xat')
 def reiniciar_xat():
     session.pop('historial', None)

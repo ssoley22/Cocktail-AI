@@ -80,7 +80,7 @@
         .graella-pindoles {
             display: flex;
             flex-wrap: wrap; /* Fa que saltin de línia si no hi caben */
-            gap: 15px;
+            gap: 12px;
             width: 100%;
             margin-top: 15px;
             align-content: flex-start; /* Ho manté tot alineat a dalt */
@@ -95,6 +95,7 @@
             display: flex;
             flex-direction: column;
             align-items: center; /* Centra verticalment */
+            max-width: 100px;
         }
 
         .numero-pindola {
@@ -106,6 +107,11 @@
 
         .text-pindola {
             font-size: 0.6rem;
+            white-space: nowrap; /* ⬅️ Prohibeix que el text salti de línia */
+            overflow: hidden; /* ⬅️ Amaga el text que sobresurt */
+            text-overflow: ellipsis; /* ⬅️ Posa els tres punts "..." */
+            width: 100%; /* ⬅️ Força a respectar l'amplada de la píndola */
+            text-align: center;
         }
 
         .container.estat {
@@ -117,6 +123,7 @@
             flex-direction: row; 
             align-items: center; /* centra verticalment */
             gap: 12px; 
+            transition: all 0.5s ease; /* Fa que el canvi de color sigui suau */
         }
 
         .bloc-estat {
@@ -128,10 +135,12 @@
             padding-right: 30px;
             padding-left: 15px;
             gap: 0px;
+            transition: all 0.5s ease;
         }
 
         .bloc-estat .numero-pindola {
             line-height: 1;
+            transition: color 0.5s ease;
         }
 
         .text-estat {
@@ -140,7 +149,9 @@
             font-weight: bold;
             color: var(--color-estres);
             flex: 1;
+            text-align: center; /* Afegit per centrar el text en l'espai restant */
             text-transform: uppercase;
+            transition: color 0.5s ease;
         }
 
     </style>
@@ -154,8 +165,7 @@
                 <h1>Cocktail IA</h1>
                 <p> ESCANEJA PER DEMANAR</p>
                 <div class="QR">
-
-                </div>
+                    </div>
                 <p class="url-text">bar-ia.local</p>
             </div>
             <div class="columna">                
@@ -163,34 +173,104 @@
                     <p style="margin-top: 0px;">EN CUA</p>
                     <div class="graella-pindoles" id="llista-espera">
                         <div class="pindola">
-                            <span class="numero-pindola">#05</span>
-                            <span class="text-pindola">Vodka Llimona</span>
+                            <span class="numero-pindola">--</span>
+                            <span class="text-pindola">Carregant...</span>
                         </div>
-                        <div class="pindola">
-                            <span class="numero-pindola">#06</span>
-                            <span class="text-pindola">Rom Taronja</span>
-                        </div>
-                        <div class="pindola">
-                            <span class="numero-pindola">#07</span>
-                            <span class="text-pindola">Screwdriver</span>
-                        </div>
-                        <div class="pindola">
-                            <span class="numero-pindola">#08</span>
-                            <span class="text-pindola">Passió llunar dolça</span> 
-                        </div> 
                     </div>
                 </div>
-                <div class="container estat">
-                    <div class="bloc-estat">
-                        <span class="numero-pindola" style="font-size: 4.5rem;">#04</span>
-                        <p> Sweet Sunrise</p>
+                <div class="container estat" id="card-activa">
+                    <div class="bloc-estat" id="bloc-activa">
+                        <span class="numero-pindola" id="num-activa" style="font-size: 4.5rem;">--</span>
+                        <p id="nom-activa" style="margin-top: 0px;">Carregant...</p>
                     </div>
-                    <span class="text-estat"> Pendent de pagament</span>
-
+                    <span class="text-estat" id="text-estat"> CONNECTANT...</span>
                 </div>
             </div>
 
         </div>        
     </div>
+
+    <script>
+        async function actualitzarPantalla() {
+            try {
+                const resposta = await fetch('/api/cua');
+                const dades = await resposta.json();
+
+                // 1. ACTUALITZAR LA LLISTA D'ESPERA
+                const llistaEspera = document.getElementById('llista-espera');
+                llistaEspera.innerHTML = ''; // Buidem les dades antigues
+
+                if (dades.cua && dades.cua.length > 0) {
+                    dades.cua.forEach(comanda => {
+                        const pindola = document.createElement('div');
+                        pindola.className = 'pindola';
+                        pindola.innerHTML = `
+                            <span class="numero-pindola">#${comanda.Num_Comanda.toString().padStart(2, '0')}</span>
+                            <span class="text-pindola">${comanda.Nom_Cocktail}</span>
+                        `;
+                        llistaEspera.appendChild(pindola);
+                    });
+                } 
+
+                // 2. ACTUALITZAR LA ZONA D'ACCIÓ
+                const cardActiva = document.getElementById('card-activa');
+                const blocActiva = document.getElementById('bloc-activa');
+                const numActiva = document.getElementById('num-activa');
+                const nomActiva = document.getElementById('nom-activa');
+                const textEstat = document.getElementById('text-estat');
+
+                if (dades.activa) {
+                    // Pensem el text amb 2 dígits (ex: 04)
+                    numActiva.innerText = `#${dades.activa.Num_Comanda.toString().padStart(2, '0')}`;
+                    nomActiva.innerText = dades.activa.Nom_Cocktail;
+                    
+                    // Màquina d'estats per als colors
+                    let color, fons, missatge;
+
+                    if (dades.activa.Estat === 'Pendent') {
+                        color = 'var(--color-estres)'; // Taronja
+                        fons = 'var(--color-estres-difuminat)';
+                        missatge = 'PENDENT DE PAGAMENT';
+                    } else if (dades.activa.Estat === 'Preparant') {
+                        color = 'var(--color-primari-clar)'; // Lila claret
+                        fons = 'var(--color-icona-bg)';
+                        missatge = 'PREPARANT...';
+                    } else if (dades.activa.Estat === 'Llest') {
+                        color = 'var(--color-alegria)'; // Verd
+                        fons = 'var(--color-alegria-difuminat)';
+                        missatge = 'LLEST PER RECOLLIR';
+                    }
+
+                    // Apliquem estils
+                    cardActiva.style.borderColor = color;
+                    cardActiva.style.background = fons;
+                    blocActiva.style.borderRightColor = color; 
+                    numActiva.style.color = color;
+                    textEstat.style.color = color;
+                    textEstat.innerText = missatge;
+
+                } else {
+                    // Si la màquina està totalment aturada i sense comandes
+                    numActiva.innerText = '--';
+                    nomActiva.innerText = 'Lliure';
+                    textEstat.innerText = 'SENSE COMANDES';
+                    
+                    cardActiva.style.borderColor = 'var(--color-vora)';
+                    cardActiva.style.background = 'transparent';
+                    blocActiva.style.borderRightColor = 'var(--color-vora)';
+                    numActiva.style.color = 'var(--color-text-subtil)';
+                    textEstat.style.color = 'var(--color-text-subtil)';
+                }
+
+            } catch (error) {
+                console.error("Error connectant amb l'API de cues:", error);
+            }
+        }
+
+        // Crida inicial immediata
+        actualitzarPantalla();
+        // Cicle infinit cada 2 segons
+        setInterval(actualitzarPantalla, 2000);
+    </script>
 </body>
 </html>

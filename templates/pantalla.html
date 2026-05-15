@@ -84,6 +84,8 @@
             width: 100%;
             margin-top: 15px;
             align-content: flex-start; /* Ho manté tot alineat a dalt */
+            overflow: hidden; /* ⬅️ Talla el contingut si sobresurt */
+            max-height: 160px;
         }
 
         .pindola {
@@ -201,7 +203,12 @@
                 llistaEspera.innerHTML = ''; // Buidem les dades antigues
 
                 if (dades.cua && dades.cua.length > 0) {
-                    dades.cua.forEach(comanda => {
+                    const MAX_PINDOLES = 7; // Màxim de comandes a mostrar abans de posar "..."
+                    const cuaMostrar = dades.cua.slice(0, MAX_PINDOLES);
+                    const comandesOcultes = dades.cua.length - MAX_PINDOLES;
+
+                    // Dibuixem les píndoles normals
+                    cuaMostrar.forEach(comanda => {
                         const pindola = document.createElement('div');
                         pindola.className = 'pindola';
                         pindola.innerHTML = `
@@ -210,7 +217,19 @@
                         `;
                         llistaEspera.appendChild(pindola);
                     });
-                } 
+
+                    // Si n'hi ha més a la cua que no caben, afegim la píndola de "més"
+                    if (comandesOcultes > 0) {
+                        const pindolaExtra = document.createElement('div');
+                        pindolaExtra.className = 'pindola';
+                        pindolaExtra.style.justifyContent = 'center'; // Centrem els punts
+                        pindolaExtra.innerHTML = `
+                            <span class="numero-pindola">...</span>
+                            <span class="text-pindola">+${comandesOcultes} més</span>
+                        `;
+                        llistaEspera.appendChild(pindolaExtra);
+                    }
+                }
 
                 // 2. ACTUALITZAR LA ZONA D'ACCIÓ
                 const cardActiva = document.getElementById('card-activa');

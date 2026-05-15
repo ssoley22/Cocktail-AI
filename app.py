@@ -134,7 +134,7 @@ def preparar(id_coctel):
         
         session.pop('historial', None)
         session.pop('coctel_ia', None)
-        return render_template('preparant.html', coctel={"Nom_Coctel": coctel_ia['nom']})
+        return render_template('tiquet.html', coctel={"Nom_Coctel": coctel_ia['nom']}, num=num_comanda)
 
     # ==========================================
     # CAS NORMAL: Còctel de la BBDD
@@ -152,7 +152,7 @@ def preparar(id_coctel):
         except Exception as e:
             pass
 
-        return render_template('preparant.html', coctel=dades)
+        return render_template('tiquet.html', coctel=dades, num=num_comanda)
     
     return render_template('error.html', missatge="No hi ha prou estoc.")
 

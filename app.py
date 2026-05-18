@@ -441,7 +441,7 @@ def iniciar_tunnel():
     try:
         # Obrim stdout+stderr per detectar la URL en qualsevol stream de logs
         tunnel_proc = subprocess.Popen(
-            ["cloudflared", "tunnel", "--url", "http://127.0.0.1:5000"],
+            ["cloudflared", "tunnel", "--url", "http://localhost:5000"],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,

@@ -11,7 +11,7 @@ def crear_database():
     conn = sqlite3.connect(RUTA_DB)
 
     # ==========================================
-    # 1. CREAR TAULES (Ara amb Comandes inclosa)
+    # 1. CREAR TAULES
     # ==========================================
     conn.executescript("""
         CREATE TABLE Ingredients (
@@ -24,7 +24,11 @@ def crear_database():
         CREATE TABLE Coctels (
             ID_Coctel  INTEGER PRIMARY KEY AUTOINCREMENT,
             Nom_Coctel TEXT NOT NULL,
-            Descripcio TEXT
+            Descripcio TEXT,
+            Preu_Produccio_Cents INTEGER NOT NULL DEFAULT 0,
+            Preu_Calculat_Cents INTEGER NOT NULL DEFAULT 0,
+            Preu_Fix_Cents INTEGER,
+            Te_Preu_Fix INTEGER NOT NULL DEFAULT 0
         );
 
         CREATE TABLE Receptes (
@@ -39,13 +43,24 @@ def crear_database():
             Posicio             INTEGER PRIMARY KEY CHECK (Posicio BETWEEN 1 AND 6),
             ID_Ingredient       INTEGER NOT NULL,
             Capacitat_Actual_ml INTEGER NOT NULL DEFAULT 0,
+            Preu_Ampolla_Cents  INTEGER NOT NULL DEFAULT 0,
+            Mida_Ampolla_ml     INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (ID_Ingredient) REFERENCES Ingredients(ID_Ingredient)
+        );
+
+        CREATE TABLE Configuracio (
+            Clau TEXT PRIMARY KEY,
+            Valor TEXT NOT NULL
         );
 
         CREATE TABLE Comandes (
             ID_Comanda    INTEGER PRIMARY KEY AUTOINCREMENT,
             Nom_Cocktail  TEXT NOT NULL,
-            Data_Hora     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            Cost_Cents    INTEGER DEFAULT 0,
+            Preu_Venut_Cents INTEGER DEFAULT 0,
+            Data_Hora     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            Estat         TEXT DEFAULT 'Pendent',
+            Num_Comanda   INTEGER DEFAULT 0
         );
     """)
 
@@ -115,11 +130,11 @@ def crear_database():
     coctels = [
         (1,  'Whisky Cola',              "El clàssic atemporal. La intensitat de la fusta del whisky amb l'espurna dolça de la cola."),
         (2,  'Whisky Llimona',           "Un contrast perfecte entre el caràcter fort del whisky i la frescor del cítric."),
-        (3,  'Whisky Ginger',            "Notes suaus i refrescants que eleven el whisky a un combinat molt fàcil de beure."),
+        (3,  'Whisky Highball',          "L'autèntica puresa. Whisky rebaixat amb l'esfervescència suau de l'aigua amb gas."),
         (4,  'Whisky Sprite',            "Bombolles cristal·lines que suavitzen la intensitat i donen un toc dolç."),
         (5,  'Whisky Taronja',           "Una combinació atrevida i afruitada, ideal per sortir de la rutina."),
         (6,  'Vodka Llimona',            "L'ànima de la festa. Cítric, potent i extremadament refrescant."),
-        (7,  'Vodka Taronja',            "El clàssic 'Tornavís'. Un toc de dolçor i vitamina per gaudir de la nit."),
+        (7,  'Vodka Taronja',            "El clàssic Tornavís. Un toc de dolçor i vitamina per gaudir de la nit."),
         (8,  'Vodka Tònica',             "Sec, transparent i directe. Per als paladars més elegants i sofisticats."),
         (9,  'Vodka Sprite',             "Dolçor suau i neta amb una espurna elèctrica al final."),
         (10, 'Vodka Cola',               "Intens i fosc, l'alternativa moderna al clàssic cubalibre."),
@@ -133,43 +148,43 @@ def crear_database():
         (18, 'Ginebra Llimona',          "El toc botànic inconfusible de la ginebra tancat en una explosió cítrica."),
         (19, 'Gin Tònic',                "El rei indiscutible de la cocteleria moderna. Sec, amargant i aromàtic."),
         (20, 'Ginebra Sprite',           "Una versió molt més dolça i suau per als que fugen de l'amargor de la tònica."),
-        (21, 'Ginebra Taronja',          "Un gir divertit i afruitat per redescobrir el gust de l'enginy."),
+        (21, 'Ginebra Taronja',          "Un gir divertit i afruitat per redescobrir el gust de l'enginy botànic."),
         (22, 'Jäger Cola',               "Energia pura i notes herbals fosques. Prepara't perquè la nit és jove."),
         (23, 'Jäger Llimona',            "Un contrast sorprenent que equilibra l'herbal amargant amb el cítric."),
         (24, 'Jäger Tònica',             "Complex, profund i molt amargant. Un repte només per als més atrevits."),
         (25, 'Licor 43 Pinya',           "Un somni dolç i avainillat envoltat de pur paisatge tropical."),
-        (26, 'Licor 43 Cola',            "L'essència daurada de Cartagena de Indias barrejada amb la foscor de la cola."),
+        (26, 'Licor 43 Cola',            "L'essència daurada barrejada amb la foscor de la cola."),
         (27, 'Malibu Pinya',             "Tanca els ulls: coco, pinya i brisa marina. Ets a una platja de sorra blanca."),
         (28, 'Malibu Cola',              "El toc inconfusible del coco del Carib banyat en refresc de cola."),
         (29, 'Amaretto Cola',            "Ametlla amarga que transforma el refresc en pura elegància a la italiana."),
-        (30, 'Aperol Spritz (Mecatrònic)',"La versió robòtica de l'aperitiu milanès per excel·lència. Fresc i amargant."),
+        (30, 'Aperol Spritz',            "L'aperitiu milanès per excel·lència. Fresc, lleuger i amb la seva amargor característica."),
         (31, 'Aperol Tònica',            "Més sec que el seu germà 'Spritz', és la sofisticació feta aperitiu."),
-        (32, 'Campari Soda',             "Roig passió, amargant i ple d'estil. Un clàssic intocable."),
+        (32, 'Campari Soda',             "Roig passió, amargant i ple d'estil. Un clàssic intocable de la cocteleria."),
         (33, 'Vermut Taronja',           "L'hora del vermut no falla mai. Tocs cítrics perfectes per obrir la gana."),
-        (34, 'Tequila Llimona',          "La Margarita dels rebels. Cítric, potent i directe a l'ànima."),
+        (34, 'Tequila Llimona',          "Cítric, potent i directe a l'ànima. Per als esperits més rebels."),
         (35, 'Tequila Sprite',           "L'espurna de la llima-llimona suavitza el caràcter volcànic de l'agave."),
         (36, 'Tequila Cola',             "Coneguda com 'La Batanga'. Fosc, salvatge i ple d'actitud mexicana."),
         (37, 'Vodka Sunrise',            "Com un trenc d'alba a la copa. Afruitat, dolç i visualment espectacular."),
-        (38, 'Tequila Sunrise',          "Tota la nostàlgia dels anys 70. Taronja, foc vermell i l'escalfor del tequila."),
+        (38, 'Tequila Sunrise',          "Tota la nostàlgia dels 70. Taronja, foc vermell i l'escalfor del tequila."),
         (39, 'Rom Sunrise',              "Una versió molt més dolça i tropical de la cèlebre sortida del sol."),
         (40, 'Gin Sunrise',              "Els botànics es desperten banyats en colors càlids i aromes de fruita."),
-        (41, 'Cosmopolitan',             "L'estil de Nova York a la teva mà. Sofisticat, lleugerament àcid i molt vermell."),
-        (42, 'Pink Lemonade',            "Fresc i molt perillós. Una llimonada que amaga l'esperit del vodka a dins."),
+        (41, 'Cosmopolitan',             "L'estil de Nova York a la teva mà. Sofisticat, lleugerament àcid i molt icònic."),
+        (42, 'Hard Pink Lemonade',       "Fresc i perillós. Una llimonada rosa que amaga l'esperit del vodka a dins."),
         (43, 'Brisa Tropical',           "Com el vent del mar al Carib. Afruitat, rogenc i extremadament fàcil de beure."),
-        (44, 'Tornavís',                 "Recepta històrica d'enginyers i miners. Senzillesa cítrica amb un secret potent."),
-        (45, 'Black Russian',            "L'elegància en la foscor. El poder del vodka endolcit i emmascarat amb notes profundes."),
-        (46, 'Mexican Mule',             "Refrescant, esfervescent i ple de vida gràcies a la màgia mexicana."),
-        (47, 'Italian Job',              "Un combinat d'alta costura, complet, botànic i amb l'amargor justa per triomfar."),
+        (44, 'Screwdriver',              "La clàssica recepta d'enginyers i miners. Senzillesa cítrica amb un vodka ben integrat."),
+        (45, 'Godmother',                "L'elegància en un got. El poder del vodka emmascarat amb notes d'ametlla amarga."),
+        (46, 'Margarita Fizz',           "Refrescant, efervescent i ple de vida gràcies a la màgia mexicana i el toc de taronja."),
+        (47, 'Italian Job',              "Un combinat d'alta costura, botànic i amb l'amargor justa per triomfar."),
         (48, 'Sweet Sunrise',            "El capvespre més sa. Un degradat de sabors cítrics i dolços lliure d'alcohol."),
-        (49, 'San Francisco',            "El rei indiscutible dels còctels afruitats. Una barreja clàssica i plena de color sense gota d'alcohol."),
-        (50, 'Llimonada Rosa',           "Refrescant, dolça i amb un toc divertit i vistós. Ideal per compartir en família."),
-        (51, 'Shirley Temple',           "El primer 'mocktail' de la història. Creat a Hollywood, és dolç, bonic i deliciós."),
-        (52, 'Roy Rogers',               "El 'germà gran' del Shirley Temple. Combina l'alegria del colorant vermell amb el cos de la Cola."),
-        (53, 'Arnold Palmer',            "Refrescant i perfectament equilibrat. El favorits dels golfistes americans per passar la set."),
-        (54, 'Puntx Tropical',           "Una festa a la boca. Explosió de sabors de fruites variades amb l'alegria de les bombolles."),
+        (49, 'San Francisco',            "El rei indiscutible dels mocktails. Una barreja clàssica, afruitada i plena de color."),
+        (50, 'Pink Lemonade',            "Refrescant, dolça i amb un toc divertit. Ideal per passar la set amb molt d'estil."),
+        (51, 'Shirley Temple',           "El primer 'mocktail' de la història. Creat a Hollywood, és bonic i deliciós."),
+        (52, 'Roy Rogers',               "El 'germà gran' del Shirley Temple. L'alegria del colorant vermell amb el cos de la Cola."),
+        (53, 'Arnold Palmer',            "Perfectament equilibrat. El favorit dels golfistes americans per refrescar-se."),
+        (54, 'Ponx Tropical',            "Una festa a la boca. Explosió de sabors de fruites variades amb l'alegria del gas."),
         (55, 'Bitter Taronja',           "L'aperitiu definitiu sense alcohol. Notes cítriques, profunditat amargant i molt d'estil."),
-        (56, 'Brindis Vermell',          "Sec, amb molta presència i sofisticació. Ideal per a la prèvia d'un gran sopar de celebració."),
-        (57, 'Isotònic Festiu',          "Aigua, energia i sabor per a recuperar l'esperit de la festa, sent el més responsable de tots."),
+        (56, 'Red Velvet',               "Sec, amb molta presència i sofisticació. Una alternativa excel·lent per brindar."),
+        (57, 'Recovery Sunrise',         "Aigua, energia i sabor per recuperar l'esperit de la festa sent el més responsable de tots."),
     ]
     conn.executemany(
         "INSERT INTO Coctels (ID_Coctel, Nom_Coctel, Descripcio) VALUES (?, ?, ?)",
@@ -182,7 +197,7 @@ def crear_database():
     receptes = [
         (1, 'Refresc Cola', 200, 1), (1, 'Whisky', 50, 2),
         (2, 'Refresc Llimona', 200, 1), (2, 'Whisky', 50, 2),
-        (3, 'Refresc Llima-Llimona', 200, 1), (3, 'Whisky', 50, 2),
+        (3, 'Gasosa', 200, 1), (3, 'Whisky', 50, 2),
         (4, 'Refresc Llima-Llimona', 200, 1), (4, 'Whisky', 50, 2),
         (5, 'Suc Taronja', 200, 1), (5, 'Whisky', 50, 2),
         (6, 'Refresc Llimona', 200, 1), (6, 'Vodka', 50, 2),
@@ -247,16 +262,21 @@ def crear_database():
     # 5. INSERIR MUNTATGE INICIAL (6 carrils)
     # ==========================================
     muntatge = [
-        (1, 18, 1000),  # Brugal (Rom)
-        (2, 7,  1000),  # Absolut Vodka
-        (3, 12, 1000),  # Seagram's (Ginebra)
-        (4, 43, 1000),  # Suc de taronja
-        (5, 49, 1000),  # Granadina
-        (6, 35, 1000),  # Fanta de llimona
+        (1, 18, 700, 1650, 700),  # Brugal (Rom)
+        (2, 7,  700, 1495, 700),  # Absolut Vodka
+        (3, 12, 700, 1720, 700),  # Seagram's (Ginebra)
+        (4, 43, 1000, 180, 1000), # Suc de taronja 
+        (5, 49, 700, 350, 700),  # Granadina
+        (6, 35, 1000, 160, 1000), # Fanta de llimona
     ]
     conn.executemany(
-        "INSERT INTO Muntatge (Posicio, ID_Ingredient, Capacitat_Actual_ml) VALUES (?, ?, ?)",
+        "INSERT INTO Muntatge (Posicio, ID_Ingredient, Capacitat_Actual_ml, Preu_Ampolla_Cents, Mida_Ampolla_ml) VALUES (?, ?, ?, ?, ?)",
         muntatge
+    )
+
+    conn.execute(
+        "INSERT INTO Configuracio (Clau, Valor) VALUES (?, ?)",
+        ('MARGE_BENEFICI', '5.0')
     )
 
     conn.commit()

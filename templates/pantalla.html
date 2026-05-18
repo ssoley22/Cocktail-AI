@@ -1,0 +1,324 @@
+<!DOCTYPE html>             
+<html lang="ca">       
+<head>                       
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/static/css/style.css"> 
+    <title>Cocktail IA - Pantalla d'estat</title>   
+    <style>
+        body {
+            overflow: hidden; /* Evita que surtin barres de desplaçament */
+            height: 100vh;
+        }
+
+        .main-container {
+            height: 100vh;
+        }
+
+        .graella-principal {
+            display: grid;
+            grid-template-columns: 4.3fr 5.7fr; /* 40% Esquerra / 60% Dreta */
+            gap: 10px; /* Separació entre columnes */
+            width: 100%;
+            height: 100%;
+        }
+
+        .columna {
+            display: grid;
+            grid-template-rows: 1fr 1fr; 
+            gap: 10px;
+            height: 100%;
+        }
+
+        /* La classe base per a les 3 caixes */
+        .container {
+            border: 1px solid var(--color-vora);
+            display: flex;
+            flex-direction: column;
+            min-width: 100%; /* Força l'amplada al 100% de la cel·la del grid */
+            min-height: 100%; /* Força l'alçada al 100% de la cel·la del grid */
+            margin: 0; 
+            box-shadow: none;
+            padding: 20px;
+        }
+
+        h1 {
+            font-family: 'Momo Signature', cursive; /* Per tenir el text normal esborrar aquesta linia i posar el spacing a 5px */
+            letter-spacing: 0px;
+            font-size: clamp(1rem, 10vw, 2.8rem); /* Dinàmic: s'adapta a la pantalla */
+            text-shadow: 0 0 50px var(--ombra-primari); /* Afegeix una ombra al text */
+            margin: 0;
+        }
+
+        p {
+            letter-spacing: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--color-text-subtil);
+            margin-top: 20px;
+        }
+
+        .QR {
+            margin-top: 15px;
+            height: 200px;
+            width: 200px;
+            background: white;
+            border: 2px solid var(--color-superficie);
+            border-radius: 15px ;
+            box-shadow: 0 0 20px var(--ombra-primari-suau);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .url-text {
+            margin-top: 5px;
+            font-size: 0.6rem;
+            color: var(--color-text-subtil-2);
+        }
+
+        .graella-pindoles {
+            display: flex;
+            flex-wrap: wrap; /* Fa que saltin de línia si no hi caben */
+            gap: 12px;
+            width: 100%;
+            margin-top: 15px;
+            align-content: flex-start; /* Ho manté tot alineat a dalt */
+            overflow: hidden; /* ⬅️ Talla el contingut si sobresurt */
+            max-height: 160px;
+        }
+
+        .pindola {
+            background-color: var(--color-superficie-claret);
+            border: 2px solid var(--color-vora);
+            color: var(--color-text-subtil);
+            padding: 5px 10px;
+            border-radius: 25px; /* Forma arrodonida de píndola */
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centra verticalment */
+            max-width: 100px;
+        }
+
+        .numero-pindola {
+            font-size: 1.3rem;
+            font-family: 'Courier New', Courier, monospace; /* Lletra de màquina/números */
+            font-weight: bold;
+            color: var(--color-estres);
+        }
+
+        .text-pindola {
+            font-size: 0.6rem;
+            white-space: nowrap; /* ⬅️ Prohibeix que el text salti de línia */
+            overflow: hidden; /* ⬅️ Amaga el text que sobresurt */
+            text-overflow: ellipsis; /* ⬅️ Posa els tres punts "..." */
+            width: 100%; /* ⬅️ Força a respectar l'amplada de la píndola */
+            text-align: center;
+        }
+
+        .container.estat {
+            /* Aquestes dues linies seguents haurien de canviar segons si esperen pagament, si està preparant o si està llest (verd, --color-alegria) */
+            border: 2px dashed var(--color-estres);
+            background: var(--color-estres-difuminat);
+
+            display: flex;
+            flex-direction: row; 
+            align-items: center; /* centra verticalment */
+            gap: 12px; 
+            transition: all 0.5s ease; /* Fa que el canvi de color sigui suau */
+        }
+
+        .bloc-estat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 30px;
+            border-right: 1px solid var(--color-estres); 
+            padding-right: 30px;
+            padding-left: 15px;
+            gap: 0px;
+            transition: all 0.5s ease;
+        }
+
+        .bloc-estat .numero-pindola {
+            line-height: 1;
+            transition: color 0.5s ease;
+        }
+
+        .text-estat {
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            font-weight: bold;
+            color: var(--color-estres);
+            flex: 1;
+            text-align: center; /* Afegit per centrar el text en l'espai restant */
+            text-transform: uppercase;
+            transition: color 0.5s ease;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="main-container">
+
+        <div class="graella-principal">          
+            
+            <div class="container">
+                <h1>Cocktail IA</h1>
+                <p> ESCANEJA PER DEMANAR</p>
+                <div class="QR" id="qr-container">
+                    </div>
+                <p class="url-text" id="url-display">bar-ia.local</p>
+            </div>
+            <div class="columna">                
+                <div class="container">
+                    <p style="margin-top: 0px;">EN CUA</p>
+                    <div class="graella-pindoles" id="llista-espera">
+                        <div class="pindola">
+                            <span class="numero-pindola">--</span>
+                            <span class="text-pindola">Carregant...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="container estat" id="card-activa">
+                    <div class="bloc-estat" id="bloc-activa">
+                        <span class="numero-pindola" id="num-activa" style="font-size: 4.5rem;">--</span>
+                        <p id="nom-activa" style="margin-top: 0px;">Carregant...</p>
+                    </div>
+                    <span class="text-estat" id="text-estat"> CONNECTANT...</span>
+                </div>
+            </div>
+
+        </div>        
+    </div>
+
+    <script>
+
+        // FUNCIO PER CARREGAR EL QR I LA URL DEL TUNEL
+        async function carregarTunnel() {
+            try {
+                const res = await fetch('/api/tunnel_info');
+                const dades = await res.json();
+                
+                if (dades.url) {
+                    // Troc expert: Afegim un timestamp a la imatge perquè el navegador no la guardi a la memòria cau (cache). 
+                    // Així sempre carrega el QR nou després de cada reinici.
+                    const timestamp = new Date().getTime();
+                    document.getElementById('qr-container').innerHTML = `<img src="${dades.qr}?t=${timestamp}" alt="QR d'accés" style="max-width: 100%; max-height: 100%; border-radius: 10px;">`;
+                    
+                    // Treiem el "https://" perquè quedi més net a la pantalla
+                    const urlNeta = dades.url.replace('https://', '');
+                    document.getElementById('url-display').innerText = urlNeta;
+                } else {
+                    // Si el túnel encara s'està obrint, tornem a preguntar d'aquí a 3 segons
+                    setTimeout(carregarTunnel, 3000);
+                }
+            } catch (error) {
+                console.error("Error carregant les dades del túnel:", error);
+                setTimeout(carregarTunnel, 5000);
+            }
+        }
+
+        // Engeguem la cerca del QR només obrir la pàgina
+        carregarTunnel();
+
+        async function actualitzarPantalla() {
+            try {
+                const resposta = await fetch('/api/cua');
+                const dades = await resposta.json();
+
+                // 1. ACTUALITZAR LA LLISTA D'ESPERA
+                const llistaEspera = document.getElementById('llista-espera');
+                llistaEspera.innerHTML = ''; // Buidem les dades antigues
+
+                if (dades.cua && dades.cua.length > 0) {
+                    const MAX_PINDOLES = 7; // Màxim de comandes a mostrar abans de posar "..."
+                    const cuaMostrar = dades.cua.slice(0, MAX_PINDOLES);
+                    const comandesOcultes = dades.cua.length - MAX_PINDOLES;
+
+                    // Dibuixem les píndoles normals
+                    cuaMostrar.forEach(comanda => {
+                        const pindola = document.createElement('div');
+                        pindola.className = 'pindola';
+                        pindola.innerHTML = `
+                            <span class="numero-pindola">#${comanda.Num_Comanda.toString().padStart(2, '0')}</span>
+                            <span class="text-pindola">${comanda.Nom_Cocktail}</span>
+                        `;
+                        llistaEspera.appendChild(pindola);
+                    });
+
+                    // Si n'hi ha més a la cua que no caben, afegim la píndola de "més"
+                    if (comandesOcultes > 0) {
+                        const pindolaExtra = document.createElement('div');
+                        pindolaExtra.className = 'pindola';
+                        pindolaExtra.style.justifyContent = 'center'; // Centrem els punts
+                        pindolaExtra.innerHTML = `
+                            <span class="numero-pindola">...</span>
+                            <span class="text-pindola">+${comandesOcultes} més</span>
+                        `;
+                        llistaEspera.appendChild(pindolaExtra);
+                    }
+                }
+
+                // 2. ACTUALITZAR LA ZONA D'ACCIÓ
+                const cardActiva = document.getElementById('card-activa');
+                const blocActiva = document.getElementById('bloc-activa');
+                const numActiva = document.getElementById('num-activa');
+                const nomActiva = document.getElementById('nom-activa');
+                const textEstat = document.getElementById('text-estat');
+
+                if (dades.activa) {
+                    // Pensem el text amb 2 dígits (ex: 04)
+                    numActiva.innerText = `#${dades.activa.Num_Comanda.toString().padStart(2, '0')}`;
+                    nomActiva.innerText = dades.activa.Nom_Cocktail;
+                    
+                    // Màquina d'estats per als colors
+                    let color, fons, missatge;
+
+                    if (dades.activa.Estat === 'Pendent') {
+                        color = 'var(--color-estres)'; // Taronja
+                        fons = 'var(--color-estres-difuminat)';
+                        missatge = 'PENDENT DE PAGAMENT';
+                    } else if (dades.activa.Estat === 'Preparant') {
+                        color = 'var(--color-primari-clar)'; // Lila claret
+                        fons = 'var(--color-icona-bg)';
+                        missatge = 'PREPARANT...';
+                    } else if (dades.activa.Estat === 'Llest') {
+                        color = 'var(--color-alegria)'; // Verd
+                        fons = 'var(--color-alegria-difuminat)';
+                        missatge = 'LLEST PER RECOLLIR';
+                    }
+
+                    // Apliquem estils
+                    cardActiva.style.borderColor = color;
+                    cardActiva.style.background = fons;
+                    blocActiva.style.borderRightColor = color; 
+                    numActiva.style.color = color;
+                    textEstat.style.color = color;
+                    textEstat.innerText = missatge;
+
+                } else {
+                    // Si la màquina està totalment aturada i sense comandes
+                    numActiva.innerText = '--';
+                    nomActiva.innerText = 'Lliure';
+                    textEstat.innerText = 'SENSE COMANDES';
+                    
+                    cardActiva.style.borderColor = 'var(--color-vora)';
+                    cardActiva.style.background = 'transparent';
+                    blocActiva.style.borderRightColor = 'var(--color-vora)';
+                    numActiva.style.color = 'var(--color-text-subtil)';
+                    textEstat.style.color = 'var(--color-text-subtil)';
+                }
+
+            } catch (error) {
+                console.error("Error connectant amb l'API de cues:", error);
+            }
+        }
+
+        // Crida inicial immediata
+        actualitzarPantalla();
+        // Cicle infinit cada 2 segons
+        setInterval(actualitzarPantalla, 2000);
+    </script>
+</body>
+</html>

@@ -64,6 +64,28 @@
             font-weight: bold;
         }
 
+        .preu-destacat {
+            margin-top: 8px;
+            margin-bottom: 18px;
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--color-primari);
+            text-shadow: 0 0 18px var(--ombra-primari-suau);
+            letter-spacing: 1px;
+        }
+
+        .preu-destacat.gratuit {
+            color: var(--color-alegria);
+            text-shadow: none;
+        }
+
+        .preu-destacat.no-disponible {
+            color: var(--color-text-subtil);
+            font-size: 1.1rem;
+            text-shadow: none;
+            letter-spacing: 0;
+        }
+
         .check-edat { 
             display: flex; 
             align-items: center; 
@@ -126,6 +148,11 @@
         .confirmar-btn:disabled::before {
             display: none;
         }
+        
+        h1 {
+            color: var(--color-text);
+            font-size: 2.5rem;
+        }
 
         @media (max-width: 600px) {
             .container {
@@ -135,7 +162,7 @@
             }
 
             .container.recepta {
-                width: 100%;
+                width: 90%;
                 padding: 14px;
                 margin-top: 12px;
                 margin-bottom: 16px;
@@ -143,6 +170,11 @@
 
             h1 {
                 font-size: 1.8rem;
+            }
+
+            .preu-destacat {
+                font-size: 1.85rem;
+                margin-bottom: 14px;
             }
 
             .check-edat {
@@ -178,6 +210,13 @@
             <span class="icona">🍹</span>
 
             <h1>{{ coctel.Nom_Coctel }}</h1>
+            {% if coctel.Preu_No_Disponible %}
+                <div class="preu-destacat no-disponible">Preu no disponible</div>
+            {% elif (coctel.Preu_Final_Cents or 0) == 0 %}
+                <div class="preu-destacat gratuit">Gratuït</div>
+            {% else %}
+                <div class="preu-destacat">{{ ('%.2f'|format((coctel.Preu_Final_Cents or 0) / 100))|replace('.', ',') }} €</div>
+            {% endif %}
             {% if coctel.frase_barman %}
                 <p> {{coctel.frase_barman}} </p>
             {% elif coctel.Descripcio %}

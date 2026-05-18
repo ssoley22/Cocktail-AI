@@ -2,9 +2,20 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import database
 import random
 import IA
+import threading
+import subprocess
+import re
+import os
+import atexit
+import qrcode
+
+database.recalcular_preus()
 
 app = Flask(__name__)
 app.secret_key = 'clau_secreta_cocktail_2026'
+
+tunnel_url = None
+tunnel_proc = None
 
 USER_ADMIN = "admin"
 PASS_ADMIN = "1234"
@@ -62,9 +73,15 @@ def confirmacio_ia():
         "Nom_Coctel": coctel_ia['nom'],
         "frase_barman": "Una creació única basada en la nostra conversa.",
         "Alcoholic": te_alcohol,
+        "Preu_Final_Cents": coctel_ia.get('preu_final_cents'),
+        "Preu_No_Disponible": coctel_ia.get('preu_no_disponible', False),
         "Recepta": [{"Nom_Liquid": liq, "Quantitat_ml": ml} for liq, ml in coctel_ia['recepta'].items()]
     }
     return render_template('confirmacio.html', coctel=dades_virtuals, disponible=True, origen='/xat')
+
+@app.route('/pantalla')
+def pantalla_estat():
+    return render_template('pantalla.html')
 
 @app.route('/preparar/<int:id_coctel>', methods=['POST'])
 def preparar(id_coctel):
@@ -112,7 +129,11 @@ def preparar(id_coctel):
             connexio.commit()
             
             # Registrar comanda per a les estadístiques (Admin)
-            database.registrar_comanda(f"IA: {coctel_ia['nom']}")
+            id_comanda, num_comanda = database.registrar_comanda(
+                f"IA: {coctel_ia['nom']}",
+                coctel_ia.get('cost_cents', 0),
+                coctel_ia.get('preu_final_cents', 0)
+            )
                 
         except Exception as e:
             connexio.rollback()
@@ -122,7 +143,7 @@ def preparar(id_coctel):
         
         session.pop('historial', None)
         session.pop('coctel_ia', None)
-        return render_template('preparant.html', coctel={"Nom_Coctel": coctel_ia['nom']})
+        return render_template('tiquet.html', coctel={"Nom_Coctel": coctel_ia['nom']}, num=num_comanda)
 
     # ==========================================
     # CAS NORMAL: Còctel de la BBDD
@@ -132,11 +153,15 @@ def preparar(id_coctel):
         
         # Registrar comanda per a les estadístiques (Admin)
         try:
-            database.registrar_comanda(dades['Nom_Coctel'])
+            id_comanda, num_comanda = database.registrar_comanda(
+                dades['Nom_Coctel'],
+                dades.get('Preu_Produccio_Cents', 0),
+                dades.get('Preu_Final_Cents', 0)
+            )
         except Exception as e:
             pass
 
-        return render_template('preparant.html', coctel=dades)
+        return render_template('tiquet.html', coctel=dades, num=num_comanda)
     
     return render_template('error.html', missatge="No hi ha prou estoc.")
 
@@ -166,6 +191,10 @@ def recomanacio(sentit):
 
 @app.route('/xat')
 def xat():
+    if request.args.get('nou') == '1':
+        session.pop('historial', None)
+        session.pop('coctel_ia', None)
+
     if 'historial' not in session:
         session['historial'] = []
     torns_fets = len(session['historial']) // 2
@@ -198,7 +227,20 @@ def generar_xat():
     if resultat:
         session['historial'].append({"role": "assistant", "content": resultat['resposta_text']})
         if resultat.get('tinc_recepta'):
-            session['coctel_ia'] = resultat['dades_coctel']
+            dades_coctel = resultat['dades_coctel']
+
+            # Calculem el preu en temps real segons els carrils actius
+            if dades_coctel and isinstance(dades_coctel.get('recepta'), dict):
+                preu_ia = database.calcular_preu_recepta_ia(dades_coctel['recepta'])
+                if preu_ia.get('ok'):
+                    dades_coctel['preu_final_cents'] = preu_ia['preu_final_cents']
+                    dades_coctel['cost_cents'] = preu_ia['cost_cents']
+                    dades_coctel['preu_no_disponible'] = False
+                else:
+                    dades_coctel['preu_no_disponible'] = True
+
+            session['coctel_ia'] = dades_coctel
+            resultat['dades_coctel'] = dades_coctel
         
         session.modified = True
         return jsonify({
@@ -210,6 +252,15 @@ def generar_xat():
         })
         
     return jsonify({"status": "error"}), 500
+
+@app.route('/api/cua', methods=['GET'])
+def api_cua():
+    dades = database.get_estat_pantalla()
+    return jsonify(dades)
+
+@app.route('/api/tunnel_info', methods=['GET'])
+def api_tunnel_info():
+    return jsonify({"url": tunnel_url, "qr": "/static/img/qr_acces.png"})
 
 @app.route('/reiniciar_xat')
 def reiniciar_xat():
@@ -238,6 +289,8 @@ def admin():
     carrils = database.get_muntatge()
     liquids = database.get_ingredients()
     estadistiques = database.get_estadistiques()
+    dashboard = database.get_dades_dashboard()
+    marge_actual = database.get_configuracio().get('marge', 3.0)
     
     tots = database.get_tots_els_coctels()
     disponibles_ara = database.get_coctels_disponibles()
@@ -252,22 +305,105 @@ def admin():
                            carrils=carrils, 
                            liquids=liquids,
                            estadistiques=estadistiques,
-                           coctels=tots)
+                           coctels=tots,
+                           dashboard=dashboard,
+                           marge_actual=marge_actual)
+
+@app.route('/guardar_marge', methods=['POST'])
+def guardar_marge():
+    if not session.get('admin_loguejat'):
+        return jsonify({"status": "error", "message": "No autoritzat"}), 401
+
+    dades_json = request.get_json(silent=True) or {}
+    marge = dades_json.get('marge') if 'marge' in dades_json else request.form.get('marge')
+
+    try:
+        database.update_marge_configuracio(marge)
+        database.recalcular_preus()
+        return jsonify({"status": "ok"})
+    except (TypeError, ValueError):
+        return jsonify({"status": "error", "message": "Marge invàlid"}), 400
+    except Exception:
+        return jsonify({"status": "error", "message": "Error intern"}), 500
 
 @app.route('/guardar_carril', methods=['POST'])
 def guardar_carril():
     if not session.get('admin_loguejat'):
         return redirect(url_for('login'))
 
+    es_ajax = (
+        request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        or "application/json" in request.headers.get("Accept", "")
+    )
+
     # Protecció: evitem un error 500 si arriben valors malformats al formulari
     try:
         pos = int(request.form.get('posicio'))
         ing_id = int(request.form.get('id_ingredient'))
-        quantitat = int(request.form.get('ml'))
+        preu_ampolla_cents = int(round(float(request.form.get('preu_ampolla_eur')) * 100))
+        mida_ampolla_ml = int(request.form.get('mida_ampolla_ml'))
+        quantitat = mida_ampolla_ml
     except (TypeError, ValueError):
+        if es_ajax:
+            return jsonify({"status": "error", "message": "Dades invàlides"}), 400
         return redirect(url_for('admin'))
 
-    database.update_muntatge(pos, ing_id, quantitat)
+    try:
+        database.update_muntatge(pos, ing_id, quantitat, preu_ampolla_cents, mida_ampolla_ml)
+
+        # Recalculem preus després de tocar un carril per mantenir el motor financer al dia
+        database.recalcular_preus()
+    except Exception as e:
+        print(f"Error recalculant preus: {e}")
+        if es_ajax:
+            return jsonify({"status": "error", "message": "Error intern"}), 500
+        return redirect(url_for('admin'))
+
+    if es_ajax:
+        return jsonify({"status": "ok", "message": "Desat"})
+
+    return redirect(url_for('admin'))
+
+@app.route('/guardar_preu_fix', methods=['POST'])
+def guardar_preu_fix():
+    if not session.get('admin_loguejat'):
+        return redirect(url_for('login'))
+
+    es_ajax = (
+        request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        or "application/json" in request.headers.get("Accept", "")
+    )
+
+    try:
+        id_coctel = int(request.form.get('id_coctel'))
+        te_preu_fix = 1 if request.form.get('te_preu_fix') == 'on' else 0
+        valor_preu_fix = (request.form.get('preu_fix_eur') or '').strip()
+    except (TypeError, ValueError):
+        if es_ajax:
+            return jsonify({"status": "error", "message": "Dades invàlides"}), 400
+        return redirect(url_for('admin'))
+
+    preu_fix_cents = None
+    if valor_preu_fix:
+        try:
+            preu_fix_cents = int(round(float(valor_preu_fix) * 100))
+        except (TypeError, ValueError):
+            te_preu_fix = 0
+            preu_fix_cents = None
+
+    if te_preu_fix == 1 and (preu_fix_cents is None or preu_fix_cents <= 0):
+        te_preu_fix = 0
+
+    try:
+        database.update_preu_fix_coctel(id_coctel, te_preu_fix, preu_fix_cents)
+    except Exception:
+        if es_ajax:
+            return jsonify({"status": "error", "message": "Error intern"}), 500
+        return redirect(url_for('admin'))
+
+    if es_ajax:
+        return jsonify({"status": "ok", "message": "Desat"})
+
     return redirect(url_for('admin'))
 
 @app.route('/logout')
@@ -299,5 +435,44 @@ def guardar_recepta_manual():
     
     return redirect(url_for('admin'))
 
+
+def iniciar_tunnel():
+    global tunnel_url, tunnel_proc
+    try:
+        # Obrim stdout+stderr per detectar la URL en qualsevol stream de logs
+        tunnel_proc = subprocess.Popen(
+            ["cloudflared", "tunnel", "--url", "http://localhost:5000"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+    except Exception as e:
+        print(f"Error iniciant cloudflared: {e}")
+        return
+    
+    patro_url = re.compile(r"https://[a-zA-Z0-9-]+\.trycloudflare\.com")
+
+    # Llegim línia a línia fins trobar la URL pública del Quick Tunnel
+    for linia in tunnel_proc.stdout:
+        coincidencia = patro_url.search(linia)
+        if coincidencia:
+            tunnel_url = coincidencia.group(0)
+            os.makedirs('static/img', exist_ok=True)
+            img_qr = qrcode.make(tunnel_url)
+            img_qr.save('static/img/qr_acces.png')
+            break
+
+
+def tancar_tunnel():
+    global tunnel_proc
+    if tunnel_proc:
+        tunnel_proc.terminate()
+
+
+atexit.register(tancar_tunnel)
+
 if __name__ == "__main__":
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not app.debug:
+        threading.Thread(target=iniciar_tunnel, daemon=True).start()
     app.run(debug=True, port=5000, host="0.0.0.0")

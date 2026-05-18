@@ -4,7 +4,8 @@ Connectar-se a la raspberry per ssh amb els datos
     Ordinador:
         ssh admin@la_ip_raspberry
 
-Un cop connectat, per activar el env:
+Un cop connectat per ssh, per activar el env:
+    cd Coctelera/Cocktail-AI/
     source env/bin/activate
 
 Comando per obrir localhost:5000 per ssh en mode kiosk a la pantalla:

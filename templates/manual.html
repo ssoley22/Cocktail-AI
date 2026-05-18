@@ -1,4 +1,4 @@
-<!DOCTYPE html>             
+<!DOCTYPE html>              
 <html lang="ca">         
 <head>                       
     <meta charset="UTF-8">  
@@ -75,7 +75,7 @@
             cursor: pointer;
             transition: 0.3s;
             font-weight: bold;
-            margin-left: 15px; /* Una mica separat de la resta */
+            margin-left: 15px;
         }
 
         .btn-toggle-disp.actiu {
@@ -89,7 +89,7 @@
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
             width: 100%;
-            max-width: 1200px; /* Evita que quedi massa ample a pantalles grans */
+            max-width: 1200px;
             padding: 10px;
         }
 
@@ -106,7 +106,8 @@
             text-decoration: none;
             color: var(--color-text);
             transition: 0.3s;
-            height: 100%; /* Fa que totes les targetes facin la mateixa alçada */
+            height: 100%;
+            overflow: hidden; 
         }
 
         /* Efecte de la targeta DISPONIBLE */
@@ -129,12 +130,26 @@
         .targeta-icona {
             font-size: 4rem;
             margin-bottom: 15px;
+            margin-top: 10px; 
         }
 
         .targeta-coctel h3 {
-            color: var(--color-primari);
+            color: var(--color-text); /* Ara el títol és neutre perquè el preu destaqui */
             font-size: 1.4rem;
-            margin-bottom: 10px;
+            margin-bottom: 5px; /* Menys marge perquè el preu quedi a prop */
+        }
+        
+        /* NOU DISSENY DEL PREU A LA LLISTA */
+        .preu-llista {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--color-primari);
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .preu-llista.gratuit {
+            color: var(--color-ok, #4caf50);
         }
 
         .targeta-coctel p {
@@ -151,19 +166,34 @@
             text-align: inherit;
         }
 
-        /* Petites etiquetes de dalt a la dreta (Estil Confirmació) */
-        .etiqueta-mini {
+        /* Etiqueta +18 de dalt a la dreta unificada */
+        .etiqueta-dades {
             position: absolute;
             top: 15px;
             right: 15px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge {
             padding: 4px 10px;
             border-radius: 8px;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             font-weight: bold;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
-        .etiqueta-mini.alcohol { background: var(--color-enfadat-difuminat); color: var(--color-error); border: 1px solid var(--color-error); }
-        .etiqueta-mini.sense-alcohol { background: var(--color-alegria-difuminat); color: var(--color-alegria); border: 1px solid var(--color-alegria); }
+
+        .badge.alcohol { 
+            background: var(--color-enfadat-difuminat); 
+            color: var(--color-error); 
+            border: 1px solid var(--color-error); 
+        }
+        .badge.sense-alcohol { 
+            background: var(--color-alegria-difuminat); 
+            color: var(--color-alegria); 
+            border: 1px solid var(--color-alegria); 
+        }
 
         @media (max-width: 600px) {
             .capçalera h1 {
@@ -188,8 +218,7 @@
                 width: 100%;
             }
 
-            .btn-filtre,
-            .btn-toggle-disp {
+            .btn-filtre, .btn-toggle-disp {
                 padding: 10px 14px;
                 font-size: 0.9rem;
                 border-radius: 14px;
@@ -212,7 +241,7 @@
                 text-align: left;
                 gap: 14px;
                 border-radius: 18px;
-                padding: 16px 16px 14px 16px;
+                padding: 16px;
                 min-height: 98px;
             }
 
@@ -221,6 +250,7 @@
                 min-height: 88px;
                 font-size: 2.8rem;
                 margin-bottom: 0;
+                margin-top: 0;
                 flex-shrink: 0;
                 display: flex;
                 align-items: center;
@@ -230,8 +260,14 @@
             }
 
             .targeta-coctel h3 {
-                font-size: 1.1rem;
-                margin-bottom: 4px;
+                font-size: 1.15rem;
+                margin-bottom: 2px;
+                margin-top: 15px; 
+            }
+
+            .preu-llista {
+                font-size: 1.05rem;
+                margin-bottom: 6px;
             }
 
             .targeta-coctel p {
@@ -247,12 +283,11 @@
                 text-align: left;
             }
 
-            .etiqueta-mini {
-                top: 10px;
-                right: 10px;
+            .etiqueta-dades {
+                top: 12px;
+                right: 15px;
             }
         }
-
     </style>
 </head>
 <body>
@@ -293,12 +328,28 @@
                     <div class="targeta-coctel bloquejada">
                 {% endif %}
 
-                    <span class="etiqueta-mini {{ 'alcohol' if coctel.Alcoholic == 1 else 'sense-alcohol' }}">
-                        {{ '+18' if coctel.Alcoholic == 1 else '0,0%' }}
-                    </span>
+                    <div class="etiqueta-dades">
+                        <span class="badge {{ 'alcohol' if coctel.Alcoholic == 1 else 'sense-alcohol' }}">
+                            {{ '+18' if coctel.Alcoholic == 1 else '0,0%' }}
+                        </span>
+                    </div>
+
                     <div class="targeta-icona">🍹</div>
                     <div class="targeta-text">
                         <h3>{{ coctel.Nom_Coctel }}</h3>
+                        
+                        {% if coctel.disponible %}
+                            <div class="preu-llista {{ 'gratuit' if (coctel.Preu_Final_Cents or 0) == 0 else '' }}">
+                                {% if (coctel.Preu_Final_Cents or 0) == 0 %}
+                                    Gratuït
+                                {% else %}
+                                    {{ ('%.2f'|format((coctel.Preu_Final_Cents or 0) / 100))|replace('.', ',') }} €
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="preu-llista">Sense estoc</div>
+                        {% endif %}
+
                         <p>{{ coctel.Descripcio }}</p>
                     </div>
 
@@ -327,40 +378,30 @@
                 const matchText = card.dataset.nom.includes(textCerca);
                 const matchAlc = (window.filtreAlcohol === 'tots' || card.dataset.alcohol === window.filtreAlcohol);
                 
-                // Mirem si la targeta té la classe 'bloquejada' dins seu
                 const estaBloquejada = card.querySelector('.targeta-coctel').classList.contains('bloquejada');
                 const matchDisponible = window.nomesDisponibles ? !estaBloquejada : true;
 
-                // Si compleix tots 3 filtres, es mostra, sinó s'amaga
                 card.style.display = (matchText && matchAlc && matchDisponible) ? 'block' : 'none';
             });
         }
 
-        // Funció per als 3 botons de l'esquerra (Tots, Amb, Sense)
         function filtrar(tipus, botoContext) {
             window.filtreAlcohol = tipus;
-            
-            // Traiem la classe 'active' de tots i la posem només al que hem clicat
             document.querySelectorAll('.btn-filtre').forEach(b => b.classList.remove('active'));
             botoContext.classList.add('active');
-            
             aplicarFiltres();
         }
 
-        // Funció exclusiva pel botó de "Disponibles"
         function toggleDisponibles(botoContext) {
             window.nomesDisponibles = !window.nomesDisponibles;
-            
             if (window.nomesDisponibles) {
                 botoContext.classList.add('actiu');
             } else {
                 botoContext.classList.remove('actiu');
             }
-            
             aplicarFiltres();
         }
 
-        // Debounce: evitem recalcular filtres a cada tecla per millorar fluïdesa
         document.getElementById('cercador').addEventListener('input', function() {
             clearTimeout(debounceCerca);
             debounceCerca = setTimeout(aplicarFiltres, 300);

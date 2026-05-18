@@ -2,11 +2,20 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import database
 import random
 import IA
+import threading
+import subprocess
+import re
+import os
+import atexit
+import qrcode
 
 database.recalcular_preus()
 
 app = Flask(__name__)
 app.secret_key = 'clau_secreta_cocktail_2026'
+
+tunnel_url = None
+tunnel_proc = None
 
 USER_ADMIN = "admin"
 PASS_ADMIN = "1234"
@@ -249,6 +258,10 @@ def api_cua():
     dades = database.get_estat_pantalla()
     return jsonify(dades)
 
+@app.route('/api/tunnel_info', methods=['GET'])
+def api_tunnel_info():
+    return jsonify({"url": tunnel_url, "qr": "/static/img/qr_acces.png"})
+
 @app.route('/reiniciar_xat')
 def reiniciar_xat():
     session.pop('historial', None)
@@ -422,5 +435,44 @@ def guardar_recepta_manual():
     
     return redirect(url_for('admin'))
 
+
+def iniciar_tunnel():
+    global tunnel_url, tunnel_proc
+    try:
+        # Obrim stdout+stderr per detectar la URL en qualsevol stream de logs
+        tunnel_proc = subprocess.Popen(
+            ["cloudflared", "tunnel", "--url", "http://127.0.0.1:5000"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+    except Exception as e:
+        print(f"Error iniciant cloudflared: {e}")
+        return
+    
+    patro_url = re.compile(r"https://[a-zA-Z0-9-]+\.trycloudflare\.com")
+
+    # Llegim línia a línia fins trobar la URL pública del Quick Tunnel
+    for linia in tunnel_proc.stdout:
+        coincidencia = patro_url.search(linia)
+        if coincidencia:
+            tunnel_url = coincidencia.group(0)
+            os.makedirs('static/img', exist_ok=True)
+            img_qr = qrcode.make(tunnel_url)
+            img_qr.save('static/img/qr_acces.png')
+            break
+
+
+def tancar_tunnel():
+    global tunnel_proc
+    if tunnel_proc:
+        tunnel_proc.terminate()
+
+
+atexit.register(tancar_tunnel)
+
 if __name__ == "__main__":
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not app.debug:
+        threading.Thread(target=iniciar_tunnel, daemon=True).start()
     app.run(debug=True, port=5000, host="0.0.0.0")

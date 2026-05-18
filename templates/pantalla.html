@@ -166,9 +166,9 @@
             <div class="container">
                 <h1>Cocktail IA</h1>
                 <p> ESCANEJA PER DEMANAR</p>
-                <div class="QR">
+                <div class="QR" id="qr-container">
                     </div>
-                <p class="url-text">bar-ia.local</p>
+                <p class="url-text" id="url-display">bar-ia.local</p>
             </div>
             <div class="columna">                
                 <div class="container">
@@ -193,6 +193,35 @@
     </div>
 
     <script>
+
+        // FUNCIO PER CARREGAR EL QR I LA URL DEL TUNEL
+        async function carregarTunnel() {
+            try {
+                const res = await fetch('/api/tunnel_info');
+                const dades = await res.json();
+                
+                if (dades.url) {
+                    // Troc expert: Afegim un timestamp a la imatge perquè el navegador no la guardi a la memòria cau (cache). 
+                    // Així sempre carrega el QR nou després de cada reinici.
+                    const timestamp = new Date().getTime();
+                    document.getElementById('qr-container').innerHTML = `<img src="${dades.qr}?t=${timestamp}" alt="QR d'accés" style="max-width: 100%; max-height: 100%; border-radius: 10px;">`;
+                    
+                    // Treiem el "https://" perquè quedi més net a la pantalla
+                    const urlNeta = dades.url.replace('https://', '');
+                    document.getElementById('url-display').innerText = urlNeta;
+                } else {
+                    // Si el túnel encara s'està obrint, tornem a preguntar d'aquí a 3 segons
+                    setTimeout(carregarTunnel, 3000);
+                }
+            } catch (error) {
+                console.error("Error carregant les dades del túnel:", error);
+                setTimeout(carregarTunnel, 5000);
+            }
+        }
+
+        // Engeguem la cerca del QR només obrir la pàgina
+        carregarTunnel();
+
         async function actualitzarPantalla() {
             try {
                 const resposta = await fetch('/api/cua');

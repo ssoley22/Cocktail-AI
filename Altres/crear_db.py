@@ -11,7 +11,7 @@ def crear_database():
     conn = sqlite3.connect(RUTA_DB)
 
     # ==========================================
-    # 1. CREAR TAULES (Ara amb Sistema de Cues)
+    # 1. CREAR TAULES
     # ==========================================
     conn.executescript("""
         CREATE TABLE Ingredients (
@@ -262,12 +262,12 @@ def crear_database():
     # 5. INSERIR MUNTATGE INICIAL (6 carrils)
     # ==========================================
     muntatge = [
-        (1, 18, 700, 1500, 700),  # Brugal (Rom)
-        (2, 7,  700, 1500, 700),  # Absolut Vodka
-        (3, 12, 700, 1500, 700),  # Seagram's (Ginebra)
-        (4, 43, 1000, 1500, 1000), # Suc de taronja 
-        (5, 49, 700, 1500, 700),  # Granadina
-        (6, 35, 1000, 1500, 1000), # Fanta de llimona
+        (1, 18, 700, 1650, 700),  # Brugal (Rom)
+        (2, 7,  700, 1495, 700),  # Absolut Vodka
+        (3, 12, 700, 1720, 700),  # Seagram's (Ginebra)
+        (4, 43, 1000, 180, 1000), # Suc de taronja 
+        (5, 49, 700, 350, 700),  # Granadina
+        (6, 35, 1000, 160, 1000), # Fanta de llimona
     ]
     conn.executemany(
         "INSERT INTO Muntatge (Posicio, ID_Ingredient, Capacitat_Actual_ml, Preu_Ampolla_Cents, Mida_Ampolla_ml) VALUES (?, ?, ?, ?, ?)",
@@ -276,7 +276,7 @@ def crear_database():
 
     conn.execute(
         "INSERT INTO Configuracio (Clau, Valor) VALUES (?, ?)",
-        ('MARGE_BENEFICI', '3.0')
+        ('MARGE_BENEFICI', '5.0')
     )
 
     conn.commit()

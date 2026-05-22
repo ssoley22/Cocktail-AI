@@ -92,9 +92,23 @@ def worker_hardware():
         recepta = tasca["recepta"]
 
         try:
+            # Mock de pagament: la comanda queda 5s en estat "Pendent"
+            time.sleep(5)
+
             actualitzar_estat_comanda(id_comanda, "Preparant")
+
             executar_recepta_hardware(recepta)
+
+            # Quan acaba de servir, torna a HOME
+            machine = obtenir_maquina()
+            machine.home()
+
+            # Es mostra com a llest durant 5s
             actualitzar_estat_comanda(id_comanda, "Llest")
+            time.sleep(5)
+
+            # Estat final perquè surti de la cua/pantalla
+            actualitzar_estat_comanda(id_comanda, "Finalitzat")
 
         except Exception as e:
             print(f"ERROR HARDWARE COMANDA {id_comanda}: {e}")

@@ -1,437 +1,312 @@
 #include <Servo.h>
 
 /*
-  CRISTAL NOCTURNO - CODI BASE AMB FINAL DE CARRERA I POSICIONS REALS
-
-  Connexions:
-  - DIR driver stepper  -> Arduino pin 2
-  - STEP driver stepper -> Arduino pin 3
-  - Final de carrera    -> Arduino pin 4
-  - Servo senyal        -> Arduino pin 9
-
-  Final de carrera:
-  - Connectat com a NC.
-  - C  -> pin 4
-  - NC -> GND
-  - Amb INPUT_PULLUP:
-      No premut = LOW
-      Premut    = HIGH
-
   Ordres:
-  - B0 = anar a inici / home
-  - B1 = ampolla 1 + dispensar
-  - B2 = ampolla 2 + dispensar
-  - B3 = ampolla 3 + dispensar
-  - B4 = ampolla 4 + dispensar
-  - B5 = ampolla 5 + dispensar
-  - B6 = ampolla 6 + dispensar
-  - B7 = dispensador de gel, doble pulsacio fins a 50 graus
-  - M 1000 = moure manualment 1000 passos
-  - M -1000 = moure enrere 1000 passos
-  - S 70 = moure servo manualment a 70 graus
-  - P 2000 = dispensar manualment durant 2000 ms
-  - Z = posar posicio actual a zero
-  - Q = veure posicio
-  - L = veure final de carrera
+  HOME
+  A1 [temps_ms]
+  A2 [temps_ms]
+  A3 [temps_ms]
+  A4 [temps_ms]
+  A5 [temps_ms]
+  A6 [temps_ms]
+  ICE [temps_ms]
+
+  Respostes:
+  HOME OK
+  OK
+  ICE OK
+  ERR
 */
 
-// -------------------- PINS --------------------
-const byte DIR_PIN = 2;
-const byte STEP_PIN = 3;
-const byte LIMIT_PIN = 4;
-const byte SERVO_PIN = 9;
+// ---------- PINS ----------
+const byte DIR_PIN = 2;        // DIR del driver stepper
+const byte STEP_PIN = 3;       // STEP del driver stepper
+const byte LIMIT_PIN = 4;      // Final de carrera
+const byte SERVO_PIN = 9;      // Senyal del servo
 
-// -------------------- MOVIMENT --------------------
-const int STEP_DELAY_US = 700;
-const int RAMP_STEPS = 200;
-const int START_DELAY_US = 2200;
+// ---------- STEPPER ----------
+const bool DIR_POSITIVE = HIGH;        // Direcció positiva; canviar a LOW si va al revés
+const bool DIR_HOME = !DIR_POSITIVE;   // Direcció cap al final de carrera
+const bool DIR_RELEASE = DIR_POSITIVE; // Direcció per sortir del final de carrera
 
-// Si el motor va al revés, canvia HIGH per LOW.
-const bool DIR_POSITIVE = HIGH;
+const int STEP_DELAY_US = 700;   // Velocitat del stepper; menys valor = més ràpid
+const int START_DELAY_US = 2200; // Velocitat inicial de la rampa
+const int RAMP_STEPS = 200;      // Acceleració/frenada; augmentar per més suavitat
 
-// Direcció cap al final de carrera.
-// Ara assumim que anar cap a l'inici és direcció negativa.
-const bool DIR_HOME = !DIR_POSITIVE;
+const long LIMIT_RELEASE_STEPS = 100; // Passos per sortir del final de carrera després del HOME
+const long MAX_HOME_STEPS = 1000000;  // Màxim de passos buscant HOME abans de donar error
 
-// Direcció per sortir del final de carrera.
-const bool DIR_RELEASE = DIR_POSITIVE;
+const bool LIMIT_PRESSED_STATE = HIGH; // Final de carrera NC + INPUT_PULLUP: premut = HIGH
 
-// Passos per sortir del final de carrera després de tocar-lo.
-const long LIMIT_RELEASE_STEPS = 100;
+// ---------- POSICIONS ----------
+const long POS_A[7] = {
+  0,      // No usat; permet que A1 sigui índex 1
+  2000,   // Ampolla 1
+  4200,   // Ampolla 2
+  6400,   // Ampolla 3
+  8500,   // Ampolla 4
+  10600,  // Ampolla 5
+  12700   // Ampolla 6
+};
 
-// Estat del final de carrera quan està premut.
-// Amb NC + INPUT_PULLUP: premut = HIGH.
-const bool LIMIT_PRESSED_STATE = HIGH;
+const long POS_ICE = 14900; // Dispensador de gel
 
-// -------------------- POSICIONS REALS --------------------
-// Posicions absolutes respecte al zero després de fer B0.
-const long POS_B1 = 2000;
-const long POS_B2 = 4200;
-const long POS_B3 = 6400;
-const long POS_B4 = 8500;
-const long POS_B5 = 10600;
-const long POS_B6 = 12700;
-const long POS_ICE = 14900;
+// ---------- SERVO ----------
+const int SERVO_REST = 30;      // Angle segur/repos abans de moure el carro
+const int SERVO_PRESS = 80;     // Angle per prémer les ampolles
+const int SERVO_HOME = 55;      // Angle després de fer HOME
+const int SERVO_ICE = 50;       // Angle per accionar el gel
 
-// -------------------- SERVO --------------------
-const int SERVO_REST_ANGLE = 30;       // posició segura per moure
-const int SERVO_PRESS_ANGLE = 80;      // pressió ampolles
-const int SERVO_HOME_ANGLE = 50;       // angle quan toca final de carrera a B0
-const int SERVO_ICE_ANGLE = 50;        // gel només fins a 50
+const int DEFAULT_PRESS_MS = 3300; // Temps per defecte de dispensació
+const int DEFAULT_ICE_MS = 600;    // Temps per defecte de cada pulsació del gel
+const int ICE_PAUSE_MS = 250;      // Pausa entre pulsacions del gel
+const int MAX_PRESS_MS = 10000;    // Temps màxim permès per seguretat
 
-const int DEFAULT_PRESS_MS = 3300;
+// ---------- VARIABLES ----------
+Servo servo;
+long pos = 0;
 
-// Gel: menys temps i doble pulsació
-const int ICE_PRESS_MS = 700;
-const int ICE_PAUSE_MS = 300;
+char cmd[24];
+byte idx = 0;
 
-// -------------------- VARIABLES --------------------
-Servo dispenserServo;
-
-long currentPosition = 0;
-
-char buffer[20];
-byte bufferIndex = 0;
-
-// -------------------- SETUP --------------------
+// ---------- SETUP ----------
 void setup() {
   pinMode(DIR_PIN, OUTPUT);
   pinMode(STEP_PIN, OUTPUT);
   pinMode(LIMIT_PIN, INPUT_PULLUP);
 
-  digitalWrite(DIR_PIN, DIR_POSITIVE);
   digitalWrite(STEP_PIN, LOW);
+  digitalWrite(DIR_PIN, DIR_POSITIVE);
 
-  dispenserServo.attach(SERVO_PIN);
-  dispenserServo.write(SERVO_REST_ANGLE);
+  servo.attach(SERVO_PIN);
+  servo.write(SERVO_REST);
 
   Serial.begin(115200);
 
-  Serial.println(F("CRISTAL NOCTURNO"));
-  Serial.println(F("Ordres: B0-B7, M, S, P, Z, Q, L"));
+  if (home()) {
+    Serial.println(F("HOME OK")); // HOME automàtic en arrencar
+  } else {
+    Serial.println(F("ERR"));
+  }
 }
 
-// -------------------- LOOP --------------------
+// ---------- LOOP ----------
 void loop() {
   readSerial();
 }
 
-// -------------------- LECTURA SERIAL --------------------
+// ---------- SERIAL ----------
 void readSerial() {
   while (Serial.available()) {
     char c = Serial.read();
 
     if (c == '\n' || c == '\r') {
-      if (bufferIndex > 0) {
-        buffer[bufferIndex] = '\0';
-        processCommand(buffer);
-        bufferIndex = 0;
+      if (idx > 0) {
+        cmd[idx] = '\0';
+        processCommand();
+        idx = 0;
       }
-    }
-
-    else if (bufferIndex < sizeof(buffer) - 1) {
-      buffer[bufferIndex++] = c;
+    } else if (idx < sizeof(cmd) - 1) {
+      cmd[idx] = c;
+      idx++;
     }
   }
 }
 
-// -------------------- PROCESSAR ORDRES --------------------
-void processCommand(char *cmd) {
-  uppercase(cmd);
-
-  // B0 = HOME
-  if (cmd[0] == 'B' && cmd[1] == '0') {
-    homeToLimit();
-  }
-
-  // B1-B7
-  else if (cmd[0] == 'B' && cmd[1] >= '1' && cmd[1] <= '7') {
-    int target = cmd[1] - '0';
-    goToStationAndDispense(target);
-  }
-
-  // P 1500 = dispensar manualment amb servo normal
-  else if (cmd[0] == 'P') {
-    int ms = atoi(cmd + 2);
-    if (ms <= 0) ms = DEFAULT_PRESS_MS;
-    dispenseBottle(ms);
-  }
-
-  // S 70 = moure servo manualment a 70 graus
-  else if (cmd[0] == 'S') {
-    int angle = atoi(cmd + 2);
-
-    if (angle >= 0 && angle <= 180) {
-      dispenserServo.write(angle);
-      Serial.print(F("SERVO "));
-      Serial.println(angle);
+// ---------- ORDRES ----------
+void processCommand() {
+  if (strcmp(cmd, "HOME") == 0) {
+    if (home()) {
+      Serial.println(F("HOME OK"));
     } else {
-      Serial.println(F("ERR SERVO"));
+      Serial.println(F("ERR"));
     }
+
+    return;
   }
 
-  // M 2100 = moviment manual
-  else if (cmd[0] == 'M') {
-    long steps = atol(cmd + 2);
-    moveSteps(steps);
-    printPosition();
+  if (cmd[0] == 'A' && cmd[1] >= '1' && cmd[1] <= '6') {
+    int bottle = cmd[1] - '0';
+    int ms = getTime(cmd + 2, DEFAULT_PRESS_MS);
+
+    if (!validTime(ms)) {
+      Serial.println(F("ERR"));
+      return;
+    }
+
+    if (goTo(POS_A[bottle])) {
+      pressServo(SERVO_PRESS, ms);
+      Serial.println(F("OK"));
+    } else {
+      Serial.println(F("ERR"));
+    }
+
+    return;
   }
 
-  // Z = posar posició actual a zero
-  else if (cmd[0] == 'Z') {
-    currentPosition = 0;
-    Serial.println(F("ZERO"));
-    printPosition();
+  if (cmd[0] == 'I' && cmd[1] == 'C' && cmd[2] == 'E') {
+    int ms = getTime(cmd + 3, DEFAULT_ICE_MS);
+
+    if (!validTime(ms)) {
+      Serial.println(F("ERR"));
+      return;
+    }
+
+    if (goTo(POS_ICE)) {
+      pressIce(ms);
+      Serial.println(F("ICE OK"));
+    } else {
+      Serial.println(F("ERR"));
+    }
+
+    return;
   }
 
-  // Q = consultar posició
-  else if (cmd[0] == 'Q') {
-    printPosition();
-  }
-
-  // L = consultar final de carrera
-  else if (cmd[0] == 'L') {
-    printLimitState();
-  }
-
-  else {
-    Serial.println(F("ERR"));
-  }
+  Serial.println(F("ERR"));
 }
 
-// -------------------- ANAR A ESTACIÓ I DISPENSAR --------------------
-void goToStationAndDispense(int station) {
-  long targetPosition = getStationPosition(station);
-
-  Serial.print(F("B"));
-  Serial.print(station);
-  Serial.print(F(" -> "));
-  Serial.println(targetPosition);
-
-  goToPosition(targetPosition);
-
-  if (station == 7) {
-    dispenseIce();
-  } else {
-    dispenseBottle(DEFAULT_PRESS_MS);
-  }
-
-  printPosition();
-}
-
-// -------------------- POSICIÓ DE CADA ESTACIÓ --------------------
-long getStationPosition(int station) {
-  if (station == 1) return POS_B1;
-  if (station == 2) return POS_B2;
-  if (station == 3) return POS_B3;
-  if (station == 4) return POS_B4;
-  if (station == 5) return POS_B5;
-  if (station == 6) return POS_B6;
-  if (station == 7) return POS_ICE;
-
-  return 0;
-}
-
-// -------------------- ANAR A POSICIÓ ABSOLUTA --------------------
-void goToPosition(long targetPosition) {
-  long movement = targetPosition - currentPosition;
-  moveSteps(movement);
-}
-
-// -------------------- DISPENSAR AMPOLLA --------------------
-void dispenseBottle(int ms) {
-  Serial.print(F("DISPENSE "));
-  Serial.println(ms);
-
-  dispenserServo.write(SERVO_PRESS_ANGLE);
-  delay(ms);
-
-  dispenserServo.write(SERVO_REST_ANGLE);
-  delay(300);
-
-  Serial.println(F("OK"));
-}
-
-// -------------------- DISPENSAR GEL --------------------
-void dispenseIce() {
-  Serial.println(F("ICE"));
-
-  // Primera pulsació
-  dispenserServo.write(SERVO_ICE_ANGLE);
-  delay(ICE_PRESS_MS);
-
-  dispenserServo.write(SERVO_REST_ANGLE);
-  delay(ICE_PAUSE_MS);
-
-  // Segona pulsació
-  dispenserServo.write(SERVO_ICE_ANGLE);
-  delay(ICE_PRESS_MS);
-
-  dispenserServo.write(SERVO_REST_ANGLE);
-  delay(300);
-
-  Serial.println(F("OK ICE"));
-}
-
-// -------------------- HOME / B0 --------------------
-void homeToLimit() {
-  Serial.println(F("HOME"));
-
-  // Abans de moure cap a home, servo a posició segura baixa.
-  dispenserServo.write(SERVO_REST_ANGLE);
+// ---------- HOME ----------
+bool home() {
+  servo.write(SERVO_REST);
   delay(200);
 
   digitalWrite(DIR_PIN, DIR_HOME);
   delayMicroseconds(20);
 
-  long maxSteps = 1000000;
+  for (long i = 0; i < MAX_HOME_STEPS; i++) {
+    if (limitPressed()) {
+      releaseLimit();
+      pos = 0; // Zero de treball després de sortir 100 passos del final de carrera
 
-  for (long i = 0; i < maxSteps; i++) {
-    if (isLimitPressed()) {
-      Serial.println(F("LIMIT"));
-
-      // Quan arriba al final de carrera a B0, puja servo a 50.
-      dispenserServo.write(SERVO_HOME_ANGLE);
-      Serial.print(F("SERVO HOME "));
-      Serial.println(SERVO_HOME_ANGLE);
+      servo.write(SERVO_HOME);
       delay(200);
 
-      releaseLimit();
-
-      currentPosition = 0;
-
-      Serial.println(F("HOME OK"));
-      printPosition();
-      return;
+      return true;
     }
 
-    digitalWrite(STEP_PIN, HIGH);
-    delayMicroseconds(4);
-    digitalWrite(STEP_PIN, LOW);
-    delayMicroseconds(STEP_DELAY_US);
+    stepMotor(STEP_DELAY_US);
   }
 
-  Serial.println(F("ERR HOME"));
+  return false;
 }
 
-// -------------------- SORTIR DEL FINAL DE CARRERA --------------------
 void releaseLimit() {
-  Serial.print(F("RELEASE "));
-  Serial.println(LIMIT_RELEASE_STEPS);
-
   digitalWrite(DIR_PIN, DIR_RELEASE);
   delayMicroseconds(20);
 
-  for (long j = 0; j < LIMIT_RELEASE_STEPS; j++) {
-    digitalWrite(STEP_PIN, HIGH);
-    delayMicroseconds(4);
-    digitalWrite(STEP_PIN, LOW);
-    delayMicroseconds(STEP_DELAY_US);
+  for (long i = 0; i < LIMIT_RELEASE_STEPS; i++) {
+    stepMotor(STEP_DELAY_US);
   }
-
-  Serial.println(F("RELEASE OK"));
 }
 
-// -------------------- MOURE STEPPER --------------------
-void moveSteps(long steps) {
+// ---------- MOVIMENT ----------
+bool goTo(long target) {
+  long steps = target - pos;
+  return moveSteps(steps);
+}
+
+bool moveSteps(long steps) {
   if (steps == 0) {
-    Serial.println(F("NO MOVE"));
-    return;
+    return true;
   }
 
-  // Sempre posem el servo a 30 abans de moure el carro.
-  dispenserServo.write(SERVO_REST_ANGLE);
+  servo.write(SERVO_REST); // Sempre baixa el servo abans de moure el carro
   delay(150);
 
-  bool direction = steps > 0 ? DIR_POSITIVE : !DIR_POSITIVE;
-  long totalSteps = labs(steps);
+  bool dir;
 
-  digitalWrite(DIR_PIN, direction);
+  if (steps > 0) {
+    dir = DIR_POSITIVE;
+  } else {
+    dir = !DIR_POSITIVE;
+  }
+
+  long total = labs(steps);
+
+  digitalWrite(DIR_PIN, dir);
   delayMicroseconds(20);
 
-  for (long i = 0; i < totalSteps; i++) {
-
-    // Si toca el final de carrera durant un moviment normal:
-    // parem, sortim una mica i posem posició 0.
-    if (isLimitPressed()) {
-      Serial.println(F("STOP LIMIT"));
-
-      // En moviment normal NO pugem el servo a 50.
-      // Només ens assegurem que estigui a 30.
-      dispenserServo.write(SERVO_REST_ANGLE);
-      delay(100);
-
+  for (long i = 0; i < total; i++) {
+    if (dir == DIR_HOME && limitPressed()) {
       releaseLimit();
-
-      currentPosition = 0;
-
-      Serial.println(F("LIMIT ZERO"));
-      break;
+      pos = 0;
+      return false;
     }
 
-    int delayNow = STEP_DELAY_US;
+    int d = rampDelay(i, total);
+    stepMotor(d);
 
-    // Rampa simple d'acceleració i frenada
-    long accelIndex = i;
-    long decelIndex = totalSteps - 1 - i;
-    long rampIndex = min(accelIndex, decelIndex);
-
-    if (rampIndex < RAMP_STEPS) {
-      delayNow = map(rampIndex, 0, RAMP_STEPS, START_DELAY_US, STEP_DELAY_US);
-    }
-
-    // Pols STEP
-    digitalWrite(STEP_PIN, HIGH);
-    delayMicroseconds(4);
-    digitalWrite(STEP_PIN, LOW);
-    delayMicroseconds(delayNow);
-
-    // Actualitzem posició estimada
-    if (direction == DIR_POSITIVE) {
-      currentPosition++;
+    if (dir == DIR_POSITIVE) {
+      pos++;
     } else {
-      currentPosition--;
-    }
-
-    // Stop manual: enviar X durant el moviment
-    if (Serial.available()) {
-      char c = Serial.peek();
-      if (c == 'X' || c == 'x') {
-        Serial.read();
-        Serial.println(F("STOP"));
-        break;
-      }
+      pos--;
     }
   }
 
-  Serial.println(F("DONE"));
+  return true;
 }
 
-// -------------------- FINAL DE CARRERA --------------------
-bool isLimitPressed() {
+void stepMotor(int delayUs) {
+  digitalWrite(STEP_PIN, HIGH);
+  delayMicroseconds(4);
+  digitalWrite(STEP_PIN, LOW);
+  delayMicroseconds(delayUs);
+}
+
+int rampDelay(long i, long total) {
+  long r = min(i, total - 1 - i);
+
+  if (r < RAMP_STEPS) {
+    return map(r, 0, RAMP_STEPS, START_DELAY_US, STEP_DELAY_US);
+  }
+
+  return STEP_DELAY_US;
+}
+
+// ---------- SERVO ----------
+void pressServo(int angle, int ms) {
+  servo.write(angle);
+  delay(ms);
+
+  servo.write(SERVO_REST);
+  delay(300);
+}
+
+void pressIce(int ms) {
+  servo.write(SERVO_ICE);
+  delay(ms);
+
+  servo.write(SERVO_REST);
+  delay(ICE_PAUSE_MS);
+
+  servo.write(SERVO_ICE);
+  delay(ms);
+
+  servo.write(SERVO_REST);
+  delay(300);
+}
+
+// ---------- UTILITATS ----------
+bool limitPressed() {
   return digitalRead(LIMIT_PIN) == LIMIT_PRESSED_STATE;
 }
 
-void printLimitState() {
-  if (isLimitPressed()) {
-    Serial.println(F("LIMIT ON"));
-  } else {
-    Serial.println(F("LIMIT OFF"));
-  }
-}
-
-// -------------------- MOSTRAR POSICIÓ --------------------
-void printPosition() {
-  Serial.print(F("POS "));
-  Serial.println(currentPosition);
-}
-
-// -------------------- PASSAR TEXT A MAJÚSCULES --------------------
-void uppercase(char *text) {
-  while (*text) {
-    if (*text >= 'a' && *text <= 'z') {
-      *text = *text - 32;
-    }
+int getTime(char *text, int defaultMs) {
+  while (*text == ' ') {
     text++;
+  }
+
+  if (*text == '\0') {
+    return defaultMs;
+  }
+
+  return atoi(text);
+}
+
+bool validTime(int ms) {
+  if (ms > 0 && ms <= MAX_PRESS_MS) {
+    return true;
+  } else {
+    return false;
   }
 }

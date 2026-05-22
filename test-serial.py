@@ -5,7 +5,7 @@ def main():
     print("Connectant amb Arduino...")
 
     try:
-        machine = CocktailMachine(port="/dev/ttyACM0")
+        machine = CocktailMachine(port="/dev/ttyUSB0")
         print("Arduino connectat i HOME inicial correcte.")
     except Exception as e:
         print(f"Error connectant amb Arduino: {e}")

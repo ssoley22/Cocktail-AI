@@ -8,7 +8,7 @@ class ArduinoError(Exception):
 
 
 class CocktailMachine:
-    def __init__(self, port="/dev/ttyACM0", baudrate=115200, timeout=2):
+    def __init__(self, port="/dev/ttyUSB0", baudrate=115200, timeout=2):
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout

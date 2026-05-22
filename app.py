@@ -3,11 +3,14 @@ import database
 import random
 import IA
 import threading
+import queue
+import time
 import subprocess
 import re
 import os
 import atexit
 import qrcode
+from arduino import CocktailMachine
 
 database.recalcular_preus()
 
@@ -19,6 +22,87 @@ tunnel_proc = None
 
 USER_ADMIN = "admin"
 PASS_ADMIN = "1234"
+
+# ==================== HARDWARE ARDUINO ====================
+
+ML_PER_DOSE = 30
+BOTTLE_PRESS_MS = 3300
+REFILL_DELAY_S = 2.5
+
+ADD_ICE_BY_DEFAULT = False
+ICE_PRESS_MS = 600
+
+cua_hardware = queue.Queue()
+maquina = None
+maquina_lock = threading.Lock()
+
+
+def actualitzar_estat_comanda(id_comanda, estat):
+    connexio = database.connectar()
+    try:
+        connexio.execute(
+            "UPDATE Comandes SET Estat = ? WHERE ID_Comanda = ?",
+            (estat, id_comanda)
+        )
+        connexio.commit()
+    finally:
+        connexio.close()
+
+
+def obtenir_maquina():
+    global maquina
+
+    with maquina_lock:
+        if maquina is None:
+            maquina = CocktailMachine(port="/dev/ttyUSB0")
+
+        return maquina
+
+
+def executar_recepta_hardware(recepta):
+    machine = obtenir_maquina()
+
+    for ingredient in recepta:
+        posicio = int(ingredient["Posicio"])
+        quantitat_ml = int(ingredient["Quantitat_ml"])
+
+        if posicio < 1 or posicio > 6:
+            raise ValueError(f"Posició d'ampolla invàlida: {posicio}")
+
+        if quantitat_ml <= 0 or quantitat_ml % ML_PER_DOSE != 0:
+            raise ValueError(f"Quantitat no compatible amb optics de 30 ml: {quantitat_ml}")
+
+        dosis = quantitat_ml // ML_PER_DOSE
+
+        for dosi_actual in range(dosis):
+            machine.dispense_bottle(posicio, BOTTLE_PRESS_MS)
+
+            if dosi_actual < dosis - 1:
+                time.sleep(REFILL_DELAY_S)
+
+    if ADD_ICE_BY_DEFAULT:
+        machine.dispense_ice(ICE_PRESS_MS)
+
+
+def worker_hardware():
+    while True:
+        tasca = cua_hardware.get()
+
+        id_comanda = tasca["id_comanda"]
+        recepta = tasca["recepta"]
+
+        try:
+            actualitzar_estat_comanda(id_comanda, "Preparant")
+            executar_recepta_hardware(recepta)
+            actualitzar_estat_comanda(id_comanda, "Llest")
+
+        except Exception as e:
+            print(f"ERROR HARDWARE COMANDA {id_comanda}: {e}")
+            actualitzar_estat_comanda(id_comanda, "Error_HW")
+
+        finally:
+            cua_hardware.task_done()
+
 
 # ==================== FLUX CLIENT ====================
 
@@ -148,18 +232,36 @@ def preparar(id_coctel):
     # ==========================================
     # CAS NORMAL: Còctel de la BBDD
     # ==========================================
+    dades = database.get_coctel(id_coctel)
+
+    if not dades:
+        return render_template('error.html', missatge="Còctel no trobat.")
+
+    for ingredient in dades["Recepta"]:
+        quantitat_ml = int(ingredient["Quantitat_ml"])
+
+        if quantitat_ml <= 0 or quantitat_ml % ML_PER_DOSE != 0:
+            return render_template(
+                'error.html',
+                missatge="Aquest còctel té una quantitat que no és múltiple de 30 ml."
+            )
+
     if database.restar_estoc(id_coctel):
-        dades = database.get_coctel(id_coctel)
-        
-        # Registrar comanda per a les estadístiques (Admin)
         try:
             id_comanda, num_comanda = database.registrar_comanda(
                 dades['Nom_Coctel'],
                 dades.get('Preu_Produccio_Cents', 0),
                 dades.get('Preu_Final_Cents', 0)
             )
+
+            cua_hardware.put({
+                "id_comanda": id_comanda,
+                "recepta": dades["Recepta"]
+            })
+
         except Exception as e:
-            pass
+            print(f"Error registrant comanda o afegint-la a la cua: {e}")
+            return render_template('error.html', missatge="Error registrant la comanda.")
 
         return render_template('tiquet.html', coctel=dades, num=num_comanda)
     
@@ -475,4 +577,6 @@ atexit.register(tancar_tunnel)
 if __name__ == "__main__":
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not app.debug:
         threading.Thread(target=iniciar_tunnel, daemon=True).start()
+        threading.Thread(target=worker_hardware, daemon=True).start()
+
     app.run(debug=True, port=5000, host="0.0.0.0")

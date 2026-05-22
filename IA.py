@@ -176,26 +176,26 @@ def xat_creatiu_amb_memoria(historial_missatges: list, carrils_actius: str) -> d
     if not carrils_actius:
         return None
 
-    # PROMPT DE SISTEMA: Aquí definim la personalitat i el format de sortida
+    # PROMPT DE SISTEMA: Aquí definim la personalitat i el format de sortida adaptat a 30ml
     sys_prompt = f"""Ets un barman creatiu en un xat en directe.
 LÍQUIDS DISPONIBLES ALS CARRILS: {carrils_actius}.
 
 LES TEVES REGLES:
-1. Si el client encara no ha donat prou detalls, xerra amb ell i pregunta-li coses per definir el seu gust.
+1. Si el client encara no ha donat prou detalls al primer missatge, pregunta-li coses per definir el seu gust.
 2. Si ja saps què li aniria bé, INVENTA un còctel original amb els líquids disponibles.
-3. REGLES DE MIXOLOGIA (Molt Important): 
+3. REGLES DE MIXOLOGIA I FÍSICA (Molt Important): 
+    - CRÍTIC: TOTS els volums de líquid han de ser ESTRICTAMENT múltiples de 30ml (és a dir: 30, 60, 90, 120, 150, 180).
+    - MAI proposis quantitats com 20ml, 45ml, 50ml o 100ml. Està totalment prohibit.
     - No facis barreges boges. Fes servir MÀXIM 4 ingredients en total. 
-    - Fes servir MÀXIM 1 o 2 alcohols forts diferents (Vodka, Rom, Ginebra) per beguda. 
-    - La quantitat TOTAL d'alcohol fort no hauria de superar els 70ml per motius de proporció i cost. La resta han de ser sucs o refrescos.
+    - Fes servir MÀXIM 1 o 2 alcohols forts diferents per beguda. 
+    - La quantitat TOTAL d'alcohol fort hauria de ser preferiblement 60ml.
 4. No tradueixis lliurement els noms dels ingredients, agafa els de la llista dels carrils com a referència.
 5. El format de sortida ha de ser SEMPRE un JSON amb aquests camps:
    - "resposta_text": La teva resposta amable o explicació en català.
    - "tinc_recepta": true/false (només true si en aquest missatge ja proposes la beguda final).
    - "dades_coctel": {{"nom": "Nom", "recepta": {{"Líquid": ml}}}} (només si tinc_recepta és true).
 
-
-IMPORTANT: Si proposes una recepta, la suma total de ml ha de ser EXACTAMENT 200."""
+IMPORTANT: Si proposes una recepta, la suma total de ml no pot superar els 240ml sota cap concepte."""
 
     # En lloc de passar un sol 'user_prompt', passem tot l'historial perquè tingui més context
     return crida_ia_redundant_historial(sys_prompt, historial_missatges)
-

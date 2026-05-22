@@ -57,6 +57,10 @@ const int SERVO_PRESS = 80;     // Angle per prémer les ampolles
 const int SERVO_HOME = 55;      // Angle després de fer HOME
 const int SERVO_ICE = 50;       // Angle per accionar el gel
 
+const int SERVO_UNJAM = 60;       // Angle intermedi per desencallar el dispensador
+const int UNJAM_DOWN_MS = 180;    // Temps baixant una mica
+const int UNJAM_UP_MS = 180;      // Temps tornant a pressionar curt
+
 const int DEFAULT_PRESS_MS = 3300; // Temps per defecte de dispensació
 const int DEFAULT_ICE_MS = 600;    // Temps per defecte de cada pulsació del gel
 const int ICE_PAUSE_MS = 250;      // Pausa entre pulsacions del gel
@@ -268,7 +272,13 @@ void pressServo(int angle, int ms) {
   servo.write(angle);
   delay(ms);
 
-  servo.write(SERVO_REST);
+  servo.write(SERVO_UNJAM); // Baixa una mica per alliberar tensió
+  delay(UNJAM_DOWN_MS);
+
+  servo.write(angle);       // Torna a pressionar curt per desencallar
+  delay(UNJAM_UP_MS);
+
+  servo.write(SERVO_REST);  // Baixa del tot
   delay(300);
 }
 

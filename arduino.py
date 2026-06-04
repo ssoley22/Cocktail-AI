@@ -115,3 +115,10 @@ class CocktailMachine:
         if self.serial is not None:
             self.serial.close()
             self.serial = None
+
+    def wait_payment(self):
+        return self.send_command_sync(
+            "PAY",
+            expected_responses=["PAY OK"],
+            timeout=70
+        )

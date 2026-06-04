@@ -106,8 +106,9 @@ def worker_hardware():
         recepta = tasca["recepta"]
 
         try:
-            # Mock de pagament: la comanda queda 5s en estat "Pendent"
-            time.sleep(5)
+            # Pagament RFID: la comanda queda en estat "Pendent" fins que es valida la targeta
+            machine = obtenir_maquina()
+            machine.wait_payment()
 
             actualitzar_estat_comanda(id_comanda, "Preparant")
 

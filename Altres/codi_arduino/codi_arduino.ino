@@ -1,5 +1,6 @@
 #include <Servo.h>
-
+#include <SPI.h>
+#include <MFRC522.h>
 /*
   Ordres:
   HOME
@@ -10,12 +11,14 @@
   A5 [temps_ms]
   A6 [temps_ms]
   ICE [temps_ms]
+  PAY
 
   Respostes:
   HOME OK
   OK
   ICE OK
   ERR
+  PAY OK
 */
 
 // ---------- PINS ----------
@@ -23,6 +26,8 @@ const byte DIR_PIN = 2;        // DIR del driver stepper
 const byte STEP_PIN = 3;       // STEP del driver stepper
 const byte LIMIT_PIN = 4;      // Final de carrera
 const byte SERVO_PIN = 9;      // Senyal del servo
+const byte RFID_RST_PIN = 5;   // Reset del lector RFID
+const byte RFID_SS_PIN = 10;   // SDA/SS del lector RFID
 
 // ---------- STEPPER ----------
 const bool DIR_POSITIVE = HIGH;        // Direcció positiva; canviar a LOW si va al revés
@@ -73,6 +78,12 @@ long pos = 0;
 char cmd[24];
 byte idx = 0;
 
+MFRC522 rfid(RFID_SS_PIN, RFID_RST_PIN);
+
+byte UID_USUARI[4] = {0x4D, 0x18, 0xA2, 0x30}; // Targeta autoritzada
+
+const unsigned long PAY_TIMEOUT_MS = 60000; // Temps màxim esperant targeta: 60s
+
 // ---------- SETUP ----------
 void setup() {
   pinMode(DIR_PIN, OUTPUT);
@@ -86,6 +97,9 @@ void setup() {
   servo.write(SERVO_REST);
 
   Serial.begin(115200);
+
+  SPI.begin();
+  rfid.PCD_Init();
 
   if (home()) {
     Serial.println(F("HOME OK")); // HOME automàtic en arrencar
@@ -125,7 +139,15 @@ void processCommand() {
     } else {
       Serial.println(F("ERR"));
     }
+    return;
+  }
 
+    if (strcmp(cmd, "PAY") == 0) {
+      if (waitPayment()) {
+        Serial.println(F("PAY OK"));
+    } else {
+        Serial.println(F("ERR"));
+    }
     return;
   }
 
@@ -294,6 +316,44 @@ void pressIce(int ms) {
 
   servo.write(SERVO_REST);
   delay(300);
+}
+
+// ---------- RFID / PAGAMENT ----------
+bool waitPayment() {
+  unsigned long startTime = millis();
+
+  while (millis() - startTime < PAY_TIMEOUT_MS) {
+    if (!rfid.PICC_IsNewCardPresent()) {
+      continue;
+    }
+
+    if (!rfid.PICC_ReadCardSerial()) {
+      continue;
+    }
+
+    bool uidCorrecte = true;
+
+    if (rfid.uid.size != 4) {
+      uidCorrecte = false;
+    } else {
+      for (byte i = 0; i < 4; i++) {
+        if (rfid.uid.uidByte[i] != UID_USUARI[i]) {
+          uidCorrecte = false;
+          break;
+        }
+      }
+    }
+
+    rfid.PICC_HaltA();
+
+    if (uidCorrecte) {
+      return true;
+    }
+
+    delay(500); // Evita lectures repetides molt ràpides d'una targeta incorrecta
+  }
+
+  return false;
 }
 
 // ---------- UTILITATS ----------

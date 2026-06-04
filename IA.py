@@ -195,7 +195,7 @@ LES TEVES REGLES:
    - "tinc_recepta": true/false (només true si en aquest missatge ja proposes la beguda final).
    - "dades_coctel": {{"nom": "Nom", "recepta": {{"Líquid": ml}}}} (només si tinc_recepta és true).
 
-IMPORTANT: Si proposes una recepta, la suma total de ml no pot superar els 240ml sota cap concepte."""
+IMPORTANT: Si proposes una recepta, la suma total de ml no pot superar els 210ml sota cap concepte."""
 
     # En lloc de passar un sol 'user_prompt', passem tot l'historial perquè tingui més context
     return crida_ia_redundant_historial(sys_prompt, historial_missatges)

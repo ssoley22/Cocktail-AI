@@ -76,6 +76,9 @@ def obtenir_maquina():
 def executar_recepta_hardware(recepta):
     machine = obtenir_maquina()
 
+    if ADD_ICE_BY_DEFAULT:
+        machine.dispense_ice(ICE_PRESS_MS)
+        
     for ingredient in recepta:
         posicio = int(ingredient["Posicio"])
         quantitat_ml = int(ingredient["Quantitat_ml"])
@@ -94,8 +97,6 @@ def executar_recepta_hardware(recepta):
             if dosi_actual < dosis - 1:
                 time.sleep(REFILL_DELAY_S)
 
-    if ADD_ICE_BY_DEFAULT:
-        machine.dispense_ice(ICE_PRESS_MS)
 
 
 def worker_hardware():

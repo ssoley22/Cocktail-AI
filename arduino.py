@@ -59,6 +59,8 @@ class CocktailMachine:
             if self.serial is None:
                 raise ArduinoError("Arduino no connectat.")
 
+            self.serial.reset_input_buffer()
+
             full_command = command.strip() + "\n"
             self.serial.write(full_command.encode("utf-8"))
             self.serial.flush()

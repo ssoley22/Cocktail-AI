@@ -637,9 +637,8 @@ def tancar_tunnel():
 atexit.register(tancar_tunnel)
 
 if __name__ == "__main__":
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not app.debug:
-        netejar_comandes_pendents_inici()
-        threading.Thread(target=iniciar_tunnel, daemon=True).start()
-        threading.Thread(target=worker_hardware, daemon=True).start()
+    netejar_comandes_pendents_inici()
+    threading.Thread(target=iniciar_tunnel, daemon=True).start()
+    threading.Thread(target=worker_hardware, daemon=True).start()
 
-    app.run(debug=True, port=5000, host="0.0.0.0")
+    app.run(debug=False, port=5000, host="0.0.0.0", use_reloader=False)

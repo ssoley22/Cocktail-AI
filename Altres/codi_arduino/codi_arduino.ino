@@ -324,10 +324,12 @@ bool waitPayment() {
 
   while (millis() - startTime < PAY_TIMEOUT_MS) {
     if (!rfid.PICC_IsNewCardPresent()) {
+      delay(50);
       continue;
     }
 
     if (!rfid.PICC_ReadCardSerial()) {
+      delay(50);
       continue;
     }
 
@@ -345,6 +347,7 @@ bool waitPayment() {
     }
 
     rfid.PICC_HaltA();
+    rfid.PCD_StopCrypto1();
 
     if (uidCorrecte) {
       return true;

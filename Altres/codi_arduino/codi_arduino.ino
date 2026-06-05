@@ -324,7 +324,7 @@ int rampDelay(long i, long total) {
 
 // ---------- SERVO ----------
 void pressBottle(int bottle, int ms) {
-  int columna = bottle - 1;
+  int columna = LED_COLS - bottle;
 
   servo.write(SERVO_PRESS);
   animateBottleDispense(columna, ms);

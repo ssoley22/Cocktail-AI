@@ -3,11 +3,14 @@ import database
 import random
 import IA
 import threading
+import queue
+import time
 import subprocess
 import re
 import os
 import atexit
 import qrcode
+from arduino import CocktailMachine
 
 database.recalcular_preus()
 
@@ -19,6 +22,160 @@ tunnel_proc = None
 
 USER_ADMIN = "admin"
 PASS_ADMIN = "1234"
+
+# ==================== HARDWARE ARDUINO ====================
+
+ML_PER_DOSE = 30
+BOTTLE_PRESS_MS = 3300
+REFILL_DELAY_S = 2.5
+
+ADD_ICE_BY_DEFAULT = True
+ICE_PRESS_MS = 600
+
+cua_hardware = queue.Queue()
+maquina = None
+maquina_lock = threading.Lock()
+
+
+def actualitzar_estat_comanda(id_comanda, estat):
+    connexio = database.connectar()
+    try:
+        connexio.execute(
+            "UPDATE Comandes SET Estat = ? WHERE ID_Comanda = ?",
+            (estat, id_comanda)
+        )
+        connexio.commit()
+    finally:
+        connexio.close()
+
+def retornar_estoc_recepta(recepta):
+    connexio = database.connectar()
+    try:
+        for ingredient in recepta:
+            posicio = int(ingredient["Posicio"])
+            quantitat_ml = int(ingredient["Quantitat_ml"])
+
+            connexio.execute(
+                "UPDATE Muntatge SET Capacitat_Actual_ml = Capacitat_Actual_ml + ? WHERE Posicio = ?",
+                (quantitat_ml, posicio)
+            )
+
+        connexio.commit()
+    except Exception:
+        connexio.rollback()
+        raise
+    finally:
+        connexio.close()
+
+def netejar_comandes_pendents_inici():
+    connexio = database.connectar()
+    try:
+        connexio.execute(
+            """
+            UPDATE Comandes
+            SET Estat = 'Cancel·lat_Inici'
+            WHERE Estat IN ('Pendent', 'Preparant', 'Llest', 'Error_HW')
+            """
+        )
+        connexio.commit()
+    finally:
+        connexio.close()
+
+
+def obtenir_maquina():
+    global maquina
+
+    with maquina_lock:
+        if maquina is None:
+            maquina = CocktailMachine(port="/dev/ttyUSB0")
+
+        return maquina
+
+
+def reset_maquina():
+    global maquina
+
+    with maquina_lock:
+        if maquina is not None:
+            try:
+                maquina.close()
+            except Exception as e:
+                print(f"Error tancant connexiÃ³ Arduino: {e}")
+            finally:
+                maquina = None
+
+
+def executar_recepta_hardware(recepta):
+    machine = obtenir_maquina()
+
+    if ADD_ICE_BY_DEFAULT:
+        machine.dispense_ice(ICE_PRESS_MS)
+        
+    for ingredient in recepta:
+        posicio = int(ingredient["Posicio"])
+        quantitat_ml = int(ingredient["Quantitat_ml"])
+
+        if posicio < 1 or posicio > 6:
+            raise ValueError(f"Posició d'ampolla invàlida: {posicio}")
+
+        if quantitat_ml <= 0 or quantitat_ml % ML_PER_DOSE != 0:
+            raise ValueError(f"Quantitat no compatible amb optics de 30 ml: {quantitat_ml}")
+
+        dosis = quantitat_ml // ML_PER_DOSE
+
+        for dosi_actual in range(dosis):
+            machine.dispense_bottle(posicio, BOTTLE_PRESS_MS)
+
+            if dosi_actual < dosis - 1:
+                time.sleep(REFILL_DELAY_S)
+
+
+
+def worker_hardware():
+    while True:
+        tasca = cua_hardware.get()
+
+        id_comanda = tasca["id_comanda"]
+        recepta = tasca["recepta"]
+
+        try:
+            # Pagament RFID: la comanda queda en estat "Pendent" fins que es valida la targeta
+            machine = obtenir_maquina()
+            try:
+                machine.wait_payment()
+            except Exception as e:
+                print(f"ERROR PAGAMENT COMANDA {id_comanda}: {e}")
+                retornar_estoc_recepta(recepta)
+                actualitzar_estat_comanda(id_comanda, "Error_Timeout_Pagament")
+                continue
+
+            actualitzar_estat_comanda(id_comanda, "Preparant")
+
+            try:
+                executar_recepta_hardware(recepta)
+
+                # Quan acaba de servir, torna a HOME
+                machine = obtenir_maquina()
+                machine.home()
+            except Exception:
+                actualitzar_estat_comanda(id_comanda, "Error_HW")
+                reset_maquina()
+                raise
+
+            # Es mostra com a llest durant 5s
+            actualitzar_estat_comanda(id_comanda, "Llest")
+            time.sleep(5)
+
+            # Estat final perquè surti de la cua/pantalla
+            actualitzar_estat_comanda(id_comanda, "Finalitzat")
+
+        except Exception as e:
+            print(f"ERROR HARDWARE COMANDA {id_comanda}: {e}")
+            actualitzar_estat_comanda(id_comanda, "Error_HW")
+
+        finally:
+            cua_hardware.task_done()
+
 
 # ==================== FLUX CLIENT ====================
 
@@ -90,76 +247,127 @@ def preparar(id_coctel):
     # ==========================================
     if id_coctel == 999:
         coctel_ia = session.get('coctel_ia')
-        if not coctel_ia: 
+
+        if not coctel_ia:
             return redirect(url_for('xat'))
-        
-        recepta = coctel_ia['recepta'] 
+
+        recepta = coctel_ia['recepta']
         muntatge = {m["Nom_Liquid"]: m for m in database.get_muntatge() if m["Nom_Liquid"]}
-        
-        # 1. Comprovació d'estoc
+
+        recepta_hardware = []
+
+        # 1. Comprovació d'estoc i quantitats compatibles amb optics de 30 ml
         for liquid, ml in recepta.items():
+            ml = int(ml)
             carril = muntatge.get(liquid)
+
+            if ml <= 0 or ml % ML_PER_DOSE != 0:
+                return render_template(
+                    'error.html',
+                    missatge=f"La quantitat de '{liquid}' no és múltiple de 30 ml."
+                )
+
             if not carril or carril["Capacitat_Actual_ml"] < ml:
                 return render_template('error.html', missatge=f"Falta '{liquid}'.")
-        
+
+            recepta_hardware.append({
+                "Posicio": carril["Posicio"],
+                "Nom_Liquid": liquid,
+                "Quantitat_ml": ml
+            })
+
         # 2. Guardar la creació de l'IA a la BD
         try:
             recepta_per_guardar = []
+
             for nom_liq, ml in recepta.items():
                 liq_info = muntatge[nom_liq]
-                recepta_per_guardar.append({'id_liquid': liq_info['ID_Ingredient'], 'ml': ml})
-            
+                recepta_per_guardar.append({
+                    'id_liquid': liq_info['ID_Ingredient'],
+                    'ml': int(ml)
+                })
+
             database.crear_recepta_completa(
-                coctel_ia['nom'], 
-                "Creació especial del xat IA", 
+                coctel_ia['nom'],
+                "Creació especial del xat IA",
                 recepta_per_guardar
             )
+
         except Exception as e:
             print(f"Error creant recepta IA a la BD: {e}")
 
-        # 3. Restar estoc dels carrils i registrar comanda
+        # 3. Reservar estoc, registrar comanda i posar-la a la cua de hardware
         connexio = database.connectar()
+
         try:
-            for liquid, ml in recepta.items():
-                posicio = muntatge[liquid]["Posicio"]
+            for ingredient in recepta_hardware:
                 connexio.execute(
-                    "UPDATE Muntatge SET Capacitat_Actual_ml = Capacitat_Actual_ml - ? WHERE Posicio = ?", 
-                    (ml, posicio)
+                    "UPDATE Muntatge SET Capacitat_Actual_ml = Capacitat_Actual_ml - ? WHERE Posicio = ?",
+                    (ingredient["Quantitat_ml"], ingredient["Posicio"])
                 )
+
             connexio.commit()
-            
-            # Registrar comanda per a les estadístiques (Admin)
+
             id_comanda, num_comanda = database.registrar_comanda(
                 f"IA: {coctel_ia['nom']}",
                 coctel_ia.get('cost_cents', 0),
                 coctel_ia.get('preu_final_cents', 0)
             )
-                
+
+            cua_hardware.put({
+                "id_comanda": id_comanda,
+                "recepta": recepta_hardware
+            })
+
         except Exception as e:
             connexio.rollback()
             return render_template('error.html', missatge="Error al processar els ingredients.")
+
         finally:
-            connexio.close() 
-        
+            connexio.close()
+
         session.pop('historial', None)
         session.pop('coctel_ia', None)
-        return render_template('tiquet.html', coctel={"Nom_Coctel": coctel_ia['nom']}, num=num_comanda)
+
+        return render_template(
+            'tiquet.html',
+            coctel={"Nom_Coctel": coctel_ia['nom']},
+            num=num_comanda
+        )
 
     # ==========================================
     # CAS NORMAL: Còctel de la BBDD
     # ==========================================
+    dades = database.get_coctel(id_coctel)
+
+    if not dades:
+        return render_template('error.html', missatge="Còctel no trobat.")
+
+    for ingredient in dades["Recepta"]:
+        quantitat_ml = int(ingredient["Quantitat_ml"])
+
+        if quantitat_ml <= 0 or quantitat_ml % ML_PER_DOSE != 0:
+            return render_template(
+                'error.html',
+                missatge="Aquest còctel té una quantitat que no és múltiple de 30 ml."
+            )
+
     if database.restar_estoc(id_coctel):
-        dades = database.get_coctel(id_coctel)
-        
-        # Registrar comanda per a les estadístiques (Admin)
         try:
             id_comanda, num_comanda = database.registrar_comanda(
                 dades['Nom_Coctel'],
                 dades.get('Preu_Produccio_Cents', 0),
                 dades.get('Preu_Final_Cents', 0)
             )
+
+            cua_hardware.put({
+                "id_comanda": id_comanda,
+                "recepta": dades["Recepta"]
+            })
+
         except Exception as e:
-            pass
+            print(f"Error registrant comanda o afegint-la a la cua: {e}")
+            return render_template('error.html', missatge="Error registrant la comanda.")
 
         return render_template('tiquet.html', coctel=dades, num=num_comanda)
     
@@ -473,6 +681,8 @@ def tancar_tunnel():
 atexit.register(tancar_tunnel)
 
 if __name__ == "__main__":
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not app.debug:
-        threading.Thread(target=iniciar_tunnel, daemon=True).start()
-    app.run(debug=True, port=5000, host="0.0.0.0")
+    netejar_comandes_pendents_inici()
+    threading.Thread(target=iniciar_tunnel, daemon=True).start()
+    threading.Thread(target=worker_hardware, daemon=True).start()
+
+    app.run(debug=False, port=5000, host="0.0.0.0", use_reloader=False)

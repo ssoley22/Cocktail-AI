@@ -48,6 +48,25 @@ def actualitzar_estat_comanda(id_comanda, estat):
     finally:
         connexio.close()
 
+def retornar_estoc_recepta(recepta):
+    connexio = database.connectar()
+    try:
+        for ingredient in recepta:
+            posicio = int(ingredient["Posicio"])
+            quantitat_ml = int(ingredient["Quantitat_ml"])
+
+            connexio.execute(
+                "UPDATE Muntatge SET Capacitat_Actual_ml = Capacitat_Actual_ml + ? WHERE Posicio = ?",
+                (quantitat_ml, posicio)
+            )
+
+        connexio.commit()
+    except Exception:
+        connexio.rollback()
+        raise
+    finally:
+        connexio.close()
+
 def netejar_comandes_pendents_inici():
     connexio = database.connectar()
     try:
@@ -71,6 +90,19 @@ def obtenir_maquina():
             maquina = CocktailMachine(port="/dev/ttyUSB0")
 
         return maquina
+
+
+def reset_maquina():
+    global maquina
+
+    with maquina_lock:
+        if maquina is not None:
+            try:
+                maquina.close()
+            except Exception as e:
+                print(f"Error tancant connexiÃ³ Arduino: {e}")
+            finally:
+                maquina = None
 
 
 def executar_recepta_hardware(recepta):
@@ -109,15 +141,26 @@ def worker_hardware():
         try:
             # Pagament RFID: la comanda queda en estat "Pendent" fins que es valida la targeta
             machine = obtenir_maquina()
-            machine.wait_payment()
+            try:
+                machine.wait_payment()
+            except Exception as e:
+                print(f"ERROR PAGAMENT COMANDA {id_comanda}: {e}")
+                retornar_estoc_recepta(recepta)
+                actualitzar_estat_comanda(id_comanda, "Error_Timeout_Pagament")
+                continue
 
             actualitzar_estat_comanda(id_comanda, "Preparant")
 
-            executar_recepta_hardware(recepta)
+            try:
+                executar_recepta_hardware(recepta)
 
-            # Quan acaba de servir, torna a HOME
-            machine = obtenir_maquina()
-            machine.home()
+                # Quan acaba de servir, torna a HOME
+                machine = obtenir_maquina()
+                machine.home()
+            except Exception:
+                actualitzar_estat_comanda(id_comanda, "Error_HW")
+                reset_maquina()
+                raise
 
             # Es mostra com a llest durant 5s
             actualitzar_estat_comanda(id_comanda, "Llest")
